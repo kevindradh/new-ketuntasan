@@ -1,11 +1,10 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
     Dialog,
     DialogContent,
@@ -15,34 +14,29 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, Trash2, BookOpen, Loader2, Search } from 'lucide-react'
+import { Plus, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createSubject, updateSubject, deleteSubject } from '@/actions/admin'
 import type { Subject } from '@/types/database'
+import { DataTable } from '@/components/ui/data-table'
+import { getColumns } from './columns'
 
 interface SubjectsClientProps {
     subjects: Subject[]
+    pageCount: number
+    currentPage: number
+    totalItems: number
 }
 
-export function SubjectsClient({ subjects }: SubjectsClientProps) {
+export function SubjectsClient({
+    subjects,
+    pageCount,
+    currentPage,
+    totalItems
+}: SubjectsClientProps) {
     const [open, setOpen] = useState(false)
     const [editingSubject, setEditingSubject] = useState<Subject | null>(null)
     const [loading, setLoading] = useState(false)
-    const [searchQuery, setSearchQuery] = useState('')
-
-    const filteredSubjects = subjects.filter(s =>
-        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.code.toLowerCase().includes(searchQuery.toLowerCase())
-    )
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -79,6 +73,14 @@ export function SubjectsClient({ subjects }: SubjectsClientProps) {
             toast.success('Mata pelajaran dihapus')
         }
     }
+
+    const columns = useMemo(() => getColumns({
+        onEdit: (subject) => {
+            setEditingSubject(subject)
+            setOpen(true)
+        },
+        onDelete: handleDelete
+    }), [])
 
     return (
         <div className="p-6 lg:p-8 space-y-6">
@@ -145,82 +147,14 @@ export function SubjectsClient({ subjects }: SubjectsClientProps) {
                 </Dialog>
             </div>
 
-            <Card className="border-0 shadow-md">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <CardTitle className="text-lg">Daftar Mata Pelajaran</CardTitle>
-                            <CardDescription>{subjects.length} mata pelajaran terdaftar</CardDescription>
-                        </div>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                            <Input
-                                placeholder="Cari..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9 w-64"
-                            />
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Kode</TableHead>
-                                <TableHead>Nama</TableHead>
-                                <TableHead>Deskripsi</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Aksi</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredSubjects.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">
-                                        <BookOpen className="h-12 w-12 mx-auto mb-3 text-slate-300" />
-                                        <p>Belum ada mata pelajaran</p>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                filteredSubjects.map((subject) => (
-                                    <TableRow key={subject.id}>
-                                        <TableCell className="font-mono font-medium">{subject.code}</TableCell>
-                                        <TableCell className="font-medium">{subject.name}</TableCell>
-                                        <TableCell className="text-slate-500 max-w-xs truncate">
-                                            {subject.description || '-'}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={subject.is_active ? 'default' : 'secondary'}>
-                                                {subject.is_active ? 'Aktif' : 'Nonaktif'}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => { setEditingSubject(subject); setOpen(true) }}
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={() => handleDelete(subject.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            <DataTable
+                columns={columns}
+                data={subjects}
+                pageCount={pageCount}
+                currentPage={currentPage}
+                totalItems={totalItems}
+                searchPlaceholder="Cari mata pelajaran..."
+            />
         </div>
     )
 }
