@@ -150,13 +150,6 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
 
-  // Get all menus for user's roles
-  const allMenus = user.roles.flatMap(role => roleMenus[role] || [])
-  // Remove duplicates based on url
-  const uniqueMenus = allMenus.filter((menu, index, self) =>
-    index === self.findIndex(m => m.url === menu.url)
-  )
-
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
