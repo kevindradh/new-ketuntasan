@@ -13,6 +13,7 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
+    DialogFooter,
 } from '@/components/ui/dialog'
 import {
     Table,
@@ -22,9 +23,9 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { ClipboardCheck, Search, Eye, Loader2, BookOpen, Users, ChevronLeft, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { ClipboardCheck, Search, Eye, Loader2, Users, ChevronLeft, ArrowRight, CheckCircle2, CheckSquare } from 'lucide-react'
 import { toast } from 'sonner'
-import { toggleCompletionItem } from '@/actions/completion'
+import { toggleCompletionItem, bulkMarkComplete } from '@/actions/completion'
 import { formatDate } from '@/lib/utils'
 import type { CompletionSheet, CompletionItem, Subject } from '@/types/database'
 
@@ -52,12 +53,15 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
     const [loading, setLoading] = useState<string | null>(null)
     const [notes, setNotes] = useState<Record<string, string>>({})
 
+    // Bulk Action State
+    const [selectedItemIds, setSelectedItemIds] = useState<string[]>([])
+    const [showBulkDialog, setShowBulkDialog] = useState(false)
+    const [bulkNotes, setBulkNotes] = useState<Record<string, string>>({})
+    const [isBulkSubmitting, setIsBulkSubmitting] = useState(false)
+
     // Filter sheets based on selection
     const filteredSheets = sheets.filter(s => {
-        // Must belong to selected class
         if (selectedAssignment && s.class_id !== selectedAssignment.class_id) return false
-
-        // Search query
         if (searchQuery) {
             return s.student?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 s.student?.nisn?.includes(searchQuery)
@@ -69,15 +73,60 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
         setLoading(itemId)
         try {
             const result = await toggleCompletionItem(itemId, notes[itemId])
-            if (result.error) {
-                toast.error(result.error)
-            } else {
-                toast.success('Ketuntasan diperbarui')
-            }
+            if (result.error) toast.error(result.error)
+            else toast.success('Ketuntasan diperbarui')
         } catch {
             toast.error('Terjadi kesalahan')
         } finally {
             setLoading(null)
+        }
+    }
+
+    // --- Bulk Selection Logic ---
+    const getSubjectItem = (sheet: typeof sheets[0]) => {
+        return sheet.completion_items?.find(i => i.subject_id === selectedAssignment?.subject_id)
+    }
+
+    const uncompletedSheets = filteredSheets.filter(s => {
+        const item = getSubjectItem(s)
+        return item && !item.is_completed // Only select items that are NOT completed
+    })
+
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            const allIds = uncompletedSheets.map(s => getSubjectItem(s)?.id).filter(id => id) as string[]
+            setSelectedItemIds(allIds)
+        } else {
+            setSelectedItemIds([])
+        }
+    }
+
+    const handleSelectOne = (itemId: string, checked: boolean) => {
+        if (checked) setSelectedItemIds(prev => [...prev, itemId])
+        else setSelectedItemIds(prev => prev.filter(id => id !== itemId))
+    }
+
+    const handleBulkSubmit = async () => {
+        setIsBulkSubmitting(true)
+        const itemsToUpdate = selectedItemIds.map(id => ({
+            itemId: id,
+            notes: bulkNotes[id]
+        }))
+
+        try {
+            const result = await bulkMarkComplete(itemsToUpdate)
+            if (result.error) {
+                toast.error(result.error)
+            } else {
+                toast.success(`${selectedItemIds.length} siswa berhasil ditandai tuntas!`)
+                setSelectedItemIds([])
+                setBulkNotes({})
+                setShowBulkDialog(false)
+            }
+        } catch {
+            toast.error('Gagal melakukan update massal')
+        } finally {
+            setIsBulkSubmitting(false)
         }
     }
 
@@ -86,7 +135,7 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
         return (
             <div className="p-6 lg:p-8 space-y-6">
                 <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Lembar Ketuntasan</h1>
+                    <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Lembar Ketuntasan & Arsip</h1>
                     <p className="text-slate-500 mt-1">Pilih kelas dan mata pelajaran untuk dikelola</p>
                 </div>
 
@@ -94,7 +143,6 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                     {assignments.map(assign => {
                         const classSheets = sheets.filter(s => s.class_id === assign.class_id)
                         const totalStudents = classSheets.length
-                        // Count completed for THIS subject
                         const completedCount = classSheets.filter(s =>
                             s.completion_items?.some(i => i.subject_id === assign.subject_id && i.is_completed)
                         ).length
@@ -130,8 +178,6 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                                             </span>
                                         </div>
                                     </div>
-
-                                    {/* Progress Bar */}
                                     <div className="mt-4 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-blue-500 rounded-full transition-all duration-500"
@@ -155,7 +201,7 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                     <Button
                         variant="ghost"
                         className="pl-0 hover:pl-2 transition-all mb-1 text-slate-500 hover:text-slate-900"
-                        onClick={() => setSelectedAssignment(null)}
+                        onClick={() => { setSelectedAssignment(null); setSelectedItemIds([]); }}
                     >
                         <ChevronLeft className="h-4 w-4 mr-1" />
                         Kembali ke Daftar Kelas
@@ -165,18 +211,72 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                     </h1>
                 </div>
 
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                        placeholder="Cari siswa..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 w-64 lg:w-80"
-                    />
+                <div className="flex items-center gap-3">
+                    {selectedItemIds.length > 0 && (
+                        <Button onClick={() => setShowBulkDialog(true)} className="bg-blue-600 hover:bg-blue-700 text-white animate-in fade-in zoom-in duration-200">
+                            <CheckSquare className="h-4 w-4 mr-2" />
+                            Tandai Tuntas ({selectedItemIds.length})
+                        </Button>
+                    )}
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                            placeholder="Cari siswa..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9 w-64 lg:w-80"
+                        />
+                    </div>
                 </div>
             </div>
 
-            {/* Sheet Detail Dialog */}
+            {/* Bulk Approval Dialog */}
+            <Dialog open={showBulkDialog} onOpenChange={setShowBulkDialog}>
+                <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Konfirmasi Ketuntasan Massal</DialogTitle>
+                        <DialogDescription>
+                            Anda akan menandai {selectedItemIds.length} siswa sebagai <b>Tuntas</b>.
+                            Silakan tambahkan catatan spesifik untuk masing-masing siswa jika perlu.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-2">
+                        {filteredSheets
+                            .filter(s => getSubjectItem(s) && selectedItemIds.includes(getSubjectItem(s)!.id))
+                            .map(sheet => {
+                                const item = getSubjectItem(sheet)!
+                                return (
+                                    <div key={item.id} className="flex gap-4 items-start p-3 border rounded-lg bg-slate-50">
+                                        <div className="w-1/3">
+                                            <p className="font-medium text-sm">{sheet.student?.full_name}</p>
+                                            <p className="text-xs text-slate-500">{sheet.student?.nisn}</p>
+                                        </div>
+                                        <div className="flex-1">
+                                            <Input
+                                                placeholder="Berikan catatan khusus untuk siswa ini..."
+                                                value={bulkNotes[item.id] || ''}
+                                                onChange={(e) => setBulkNotes(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                                className="bg-white text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                )
+                            })
+                        }
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowBulkDialog(false)}>Batal</Button>
+                        <Button onClick={handleBulkSubmit} disabled={isBulkSubmitting}>
+                            {isBulkSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Simpan Semua
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Sheet Detail Dialog (Single View) */}
             <Dialog open={!!selectedSheet} onOpenChange={(v) => !v && setSelectedSheet(null)}>
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
@@ -190,10 +290,9 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                             <p className="font-medium">{selectedSheet?.exam?.name}</p>
                             <p className="text-sm text-slate-500">{selectedSheet?.exam?.exam_type}</p>
                         </div>
-
                         <div className="space-y-3">
                             {selectedSheet?.completion_items
-                                ?.filter(item => item.subject_id === selectedAssignment.subject_id) // Show only selected subject
+                                ?.filter(item => item.subject_id === selectedAssignment.subject_id)
                                 .map((item) => (
                                     <div key={item.id} className="p-4 border rounded-lg">
                                         <div className="flex items-start gap-4">
@@ -241,7 +340,14 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="pl-6">Siswa</TableHead>
+                                <TableHead className="w-12 text-center text-slate-400">
+                                    <Checkbox
+                                        checked={uncompletedSheets.length > 0 && selectedItemIds.length === uncompletedSheets.length}
+                                        onCheckedChange={(c) => handleSelectAll(!!c)}
+                                        aria-label="Select all"
+                                    />
+                                </TableHead>
+                                <TableHead className="pl-2">Siswa</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Ujian</TableHead>
                                 <TableHead className="text-right pr-6">Aksi</TableHead>
@@ -250,7 +356,7 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                         <TableBody>
                             {filteredSheets.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center py-12 text-slate-500">
+                                    <TableCell colSpan={5} className="text-center py-12 text-slate-500">
                                         <div className="flex flex-col items-center">
                                             <Users className="h-12 w-12 text-slate-200 mb-3" />
                                             <p className="font-medium">Tidak ada siswa ditemukan</p>
@@ -260,13 +366,21 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                                 </TableRow>
                             ) : (
                                 filteredSheets.map((sheet) => {
-                                    // Find item for CURRENT selected Subject
                                     const subjectItem = sheet.completion_items?.find(i => i.subject_id === selectedAssignment.subject_id)
                                     const isCompleted = subjectItem?.is_completed
+                                    const itemId = subjectItem?.id
 
                                     return (
                                         <TableRow key={sheet.id} className="hover:bg-slate-50">
-                                            <TableCell className="pl-6">
+                                            <TableCell className="text-center">
+                                                {!isCompleted && itemId && (
+                                                    <Checkbox
+                                                        checked={selectedItemIds.includes(itemId)}
+                                                        onCheckedChange={(c) => handleSelectOne(itemId, !!c)}
+                                                    />
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="pl-2">
                                                 <div>
                                                     <p className="font-medium">{sheet.student?.full_name}</p>
                                                     <p className="text-xs text-slate-500">{sheet.student?.nisn}</p>

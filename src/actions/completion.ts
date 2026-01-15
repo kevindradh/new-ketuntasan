@@ -4,6 +4,50 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 // ========== TOGGLE COMPLETION ITEM ==========
+export async function bulkMarkComplete(items: { itemId: string; notes?: string }[]) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    // Validate ownership for ALL items (simple check: if count matches)
+    // For efficiency, we just assume client is correct but Supabase RLS would block if not owned?
+    // Actually, completion_items RLS usually allows UPDATE if teacher_id = auth.uid()
+    // We will loop for now as bulk updates in Supabase are tricky without a custom function or RPC
+
+    // Better: Filter items by teacher_id first
+    // Since we need to save distinct notes, we iterate.
+    // To be safe and reasonably fast:
+
+    const results = await Promise.all(items.map(async (item) => {
+        const { error } = await supabase
+            .from('completion_items')
+            .update({
+                is_completed: true,
+                completed_by: user.id,
+                completed_at: new Date().toISOString(),
+                notes: item.notes,
+            })
+            .eq('id', item.itemId)
+            .eq('teacher_id', user.id) // Security check
+
+        return error
+    }))
+
+    const errors = results.filter(e => e !== null)
+    if (errors.length > 0) return { error: 'Beberapa item gagal diperbarui' }
+
+    // Notifications (Optional: Maybe too spammy? But simpler to skip or batch later)
+    // Use background job or ignoring for bulk to prevent spam?
+    // User didn't specify. I'll skip notification spam for now or send one generic.
+    // Actually existing toggle sends notification.
+    // I will skip notifications for bulk to avoid rate limits or annoyance, OR notify only 1 per student.
+    // For MVP, simply update.
+
+    revalidatePath('/teacher/completion-sheets')
+    return { success: true }
+}
+
 export async function toggleCompletionItem(itemId: string, notes?: string) {
     const supabase = await createClient()
 
