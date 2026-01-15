@@ -19,8 +19,10 @@ export async function bulkMarkComplete(items: { itemId: string; notes?: string }
     // Since we need to save distinct notes, we iterate.
     // To be safe and reasonably fast:
 
+    // Use Promise.all to handle updates in parallel
     const results = await Promise.all(items.map(async (item) => {
-        const { error } = await supabase
+        // Update and select related data for notification
+        const { data: updatedItem, error } = await supabase
             .from('completion_items')
             .update({
                 is_completed: true,
@@ -29,20 +31,26 @@ export async function bulkMarkComplete(items: { itemId: string; notes?: string }
                 notes: item.notes,
             })
             .eq('id', item.itemId)
-            .eq('teacher_id', user.id) // Security check
+            .eq('teacher_id', user.id)
+            .select('*, completion_sheets(student_id)')
+            .single()
 
-        return error
+        if (error || !updatedItem) return error
+
+        // Send notification to student
+        await supabase.from('notifications').insert({
+            user_id: updatedItem.completion_sheets.student_id,
+            type: 'SUBJECT_COMPLETED',
+            title: 'Mata Pelajaran Tuntas',
+            message: 'Guru telah menandai ketuntasan mata pelajaran Anda via Batch Approval',
+            metadata: { completion_item_id: item.itemId },
+        })
+
+        return null
     }))
 
     const errors = results.filter(e => e !== null)
     if (errors.length > 0) return { error: 'Beberapa item gagal diperbarui' }
-
-    // Notifications (Optional: Maybe too spammy? But simpler to skip or batch later)
-    // Use background job or ignoring for bulk to prevent spam?
-    // User didn't specify. I'll skip notification spam for now or send one generic.
-    // Actually existing toggle sends notification.
-    // I will skip notifications for bulk to avoid rate limits or annoyance, OR notify only 1 per student.
-    // For MVP, simply update.
 
     revalidatePath('/teacher/completion-sheets')
     return { success: true }
