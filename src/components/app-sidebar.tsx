@@ -92,6 +92,11 @@ const roleMenus: Record<UserRole, { title: string; url: string; icon: React.Elem
       icon: School,
     },
     {
+      title: "Data Siswa",
+      url: "/admin/students",
+      icon: GraduationCap,
+    },
+    {
       title: "Pengajaran",
       url: "/admin/teachers",
       icon: Users,

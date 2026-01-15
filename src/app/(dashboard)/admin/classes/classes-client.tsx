@@ -254,6 +254,16 @@ export function ClassesClient({ classes, teachers }: ClassesClientProps) {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
+                                                    asChild
+                                                    title="Kelola Siswa"
+                                                >
+                                                    <a href={`/admin/classes/${cls.id}`}>
+                                                        <Users className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
                                                     onClick={() => { setEditingClass(cls); setOpen(true) }}
                                                 >
                                                     <Pencil className="h-4 w-4" />
