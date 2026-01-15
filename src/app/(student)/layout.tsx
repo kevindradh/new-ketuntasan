@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { DashboardClient } from './dashboard-client'
 
-export default async function DashboardLayout({
+export default async function StudentLayout({
     children,
 }: {
     children: React.ReactNode
@@ -15,13 +14,14 @@ export default async function DashboardLayout({
         redirect('/login')
     }
 
-    // Get profile with roles
+    // Get profile
     const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single()
 
+    // Get roles
     const { data: roles } = await supabase
         .from('user_roles')
         .select('role')
@@ -29,17 +29,14 @@ export default async function DashboardLayout({
 
     const userRoles = roles?.map(r => r.role) || []
 
-    // Redirect students to их dedicated mobile page
-    // Students should not access the dashboard sidebar routes
-    if (userRoles.length === 1 && userRoles.includes('STUDENT')) {
-        redirect('/student')
+    // Check if user is a student
+    if (!userRoles.includes('STUDENT')) {
+        redirect('/admin')
     }
 
-    const userData = {
-        ...profile,
-        roles: userRoles,
-    }
-
-    return <DashboardClient user={userData}>{children}</DashboardClient>
+    return (
+        <div className="min-h-screen bg-slate-50">
+            {children}
+        </div>
+    )
 }
-

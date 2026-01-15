@@ -11,6 +11,15 @@ import { GraduationCap, Loader2, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
+// Role priority for redirect
+const rolePriority: Record<string, string> = {
+    ADMIN: '/admin',
+    TEACHER: '/teacher',
+    HOMEROOM: '/homeroom',
+    COUNSELOR: '/counselor',
+    STUDENT: '/student',
+}
+
 export default function LoginPage() {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
@@ -26,7 +35,7 @@ export default function LoginPage() {
 
         try {
             const supabase = createClient()
-            const { error } = await supabase.auth.signInWithPassword({
+            const { data: authData, error } = await supabase.auth.signInWithPassword({
                 email: formData.email,
                 password: formData.password,
             })
@@ -36,8 +45,27 @@ export default function LoginPage() {
                 return
             }
 
+            // Get user roles to determine redirect
+            const { data: roles } = await supabase
+                .from('user_roles')
+                .select('role')
+                .eq('user_id', authData.user?.id)
+
+            // Determine redirect path based on highest priority role
+            let redirectPath = '/admin' // default fallback
+            if (roles && roles.length > 0) {
+                const userRoles = roles.map(r => r.role)
+                // Check roles in priority order
+                for (const role of ['ADMIN', 'TEACHER', 'HOMEROOM', 'COUNSELOR', 'STUDENT']) {
+                    if (userRoles.includes(role)) {
+                        redirectPath = rolePriority[role]
+                        break
+                    }
+                }
+            }
+
             toast.success('Berhasil masuk!')
-            router.push('/admin')
+            router.push(redirectPath)
             router.refresh()
         } catch {
             toast.error('Terjadi kesalahan')
