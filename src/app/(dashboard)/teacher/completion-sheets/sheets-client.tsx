@@ -22,7 +22,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { ClipboardCheck, Search, Eye, Loader2 } from 'lucide-react'
+import { ClipboardCheck, Search, Eye, Loader2, BookOpen, Users, ChevronLeft, ArrowRight, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { toggleCompletionItem } from '@/actions/completion'
 import { formatDate } from '@/lib/utils'
@@ -35,20 +35,35 @@ interface CompletionSheetsClientProps {
         class?: { name: string }
         completion_items?: (CompletionItem & { subject?: Subject })[]
     })[]
-    teacherSubjectIds: string[]
+    assignments: {
+        id: string
+        class_id: string
+        subject_id: string
+        class?: { id: string; name: string }
+        subject?: { id: string; name: string; code: string }
+    }[]
     teacherId: string
 }
 
-export function CompletionSheetsClient({ sheets, teacherSubjectIds, teacherId }: CompletionSheetsClientProps) {
+export function CompletionSheetsClient({ sheets, assignments, teacherId }: CompletionSheetsClientProps) {
     const [searchQuery, setSearchQuery] = useState('')
+    const [selectedAssignment, setSelectedAssignment] = useState<typeof assignments[0] | null>(null)
     const [selectedSheet, setSelectedSheet] = useState<typeof sheets[0] | null>(null)
     const [loading, setLoading] = useState<string | null>(null)
     const [notes, setNotes] = useState<Record<string, string>>({})
 
-    const filteredSheets = sheets.filter(s =>
-        s.student?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.class?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    // Filter sheets based on selection
+    const filteredSheets = sheets.filter(s => {
+        // Must belong to selected class
+        if (selectedAssignment && s.class_id !== selectedAssignment.class_id) return false
+
+        // Search query
+        if (searchQuery) {
+            return s.student?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                s.student?.nisn?.includes(searchQuery)
+        }
+        return true
+    })
 
     const handleToggle = async (itemId: string) => {
         setLoading(itemId)
@@ -66,11 +81,99 @@ export function CompletionSheetsClient({ sheets, teacherSubjectIds, teacherId }:
         }
     }
 
+    // VIEW 1: SELECTION GRID
+    if (!selectedAssignment) {
+        return (
+            <div className="p-6 lg:p-8 space-y-6">
+                <div>
+                    <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Lembar Ketuntasan</h1>
+                    <p className="text-slate-500 mt-1">Pilih kelas dan mata pelajaran untuk dikelola</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {assignments.map(assign => {
+                        const classSheets = sheets.filter(s => s.class_id === assign.class_id)
+                        const totalStudents = classSheets.length
+                        // Count completed for THIS subject
+                        const completedCount = classSheets.filter(s =>
+                            s.completion_items?.some(i => i.subject_id === assign.subject_id && i.is_completed)
+                        ).length
+
+                        return (
+                            <Card
+                                key={assign.id}
+                                className="group hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer border-slate-200"
+                                onClick={() => setSelectedAssignment(assign)}
+                            >
+                                <CardHeader>
+                                    <div className="flex justify-between items-start">
+                                        <Badge variant="outline" className="mb-2 bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200">
+                                            {assign.class?.name}
+                                        </Badge>
+                                        <ArrowRight className="h-5 w-5 text-slate-300 group-hover:text-blue-500 transition-colors" />
+                                    </div>
+                                    <CardTitle className="text-xl group-hover:text-blue-700 transition-colors">
+                                        {assign.subject?.name}
+                                    </CardTitle>
+                                    <CardDescription>{assign.subject?.code}</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex items-center gap-4 text-sm text-slate-600 mt-2">
+                                        <div className="flex items-center gap-1.5">
+                                            <Users className="h-4 w-4" />
+                                            <span>{totalStudents} Siswa</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <ClipboardCheck className="h-4 w-4" />
+                                            <span className={completedCount === totalStudents && totalStudents > 0 ? "text-green-600 font-medium" : ""}>
+                                                {completedCount} Tuntas
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Progress Bar */}
+                                    <div className="mt-4 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                                            style={{ width: `${totalStudents ? (completedCount / totalStudents) * 100 : 0}%` }}
+                                        />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )
+                    })}
+                </div>
+            </div>
+        )
+    }
+
+    // VIEW 2: DETAIL TABLE
     return (
         <div className="p-6 lg:p-8 space-y-6">
-            <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Lembar Ketuntasan & Arsip</h1>
-                <p className="text-slate-500 mt-1">Daftar semua lembar ketuntasan siswa (aktif & arsip)</p>
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div>
+                    <Button
+                        variant="ghost"
+                        className="pl-0 hover:pl-2 transition-all mb-1 text-slate-500 hover:text-slate-900"
+                        onClick={() => setSelectedAssignment(null)}
+                    >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Kembali ke Daftar Kelas
+                    </Button>
+                    <h1 className="text-2xl font-bold text-slate-900 line-clamp-1">
+                        {selectedAssignment.class?.name} - {selectedAssignment.subject?.name}
+                    </h1>
+                </div>
+
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                        placeholder="Cari siswa..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9 w-64 lg:w-80"
+                    />
+                </div>
             </div>
 
             {/* Sheet Detail Dialog */}
@@ -90,7 +193,7 @@ export function CompletionSheetsClient({ sheets, teacherSubjectIds, teacherId }:
 
                         <div className="space-y-3">
                             {selectedSheet?.completion_items
-                                ?.filter(item => item.teacher_id === teacherId)
+                                ?.filter(item => item.subject_id === selectedAssignment.subject_id) // Show only selected subject
                                 .map((item) => (
                                     <div key={item.id} className="p-4 border rounded-lg">
                                         <div className="flex items-start gap-4">
@@ -124,6 +227,9 @@ export function CompletionSheetsClient({ sheets, teacherSubjectIds, teacherId }:
                                         </div>
                                     </div>
                                 ))}
+                            {selectedSheet?.completion_items?.filter(item => item.subject_id === selectedAssignment.subject_id).length === 0 && (
+                                <p className="text-slate-500 italic text-center py-4">Item mapel tidak ditemukan di lembar ini.</p>
+                            )}
                         </div>
                     </div>
                 </DialogContent>
@@ -131,82 +237,64 @@ export function CompletionSheetsClient({ sheets, teacherSubjectIds, teacherId }:
 
             {/* Sheets Table */}
             <Card className="border-0 shadow-md">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <CardTitle className="text-lg">Daftar Lembar Ketuntasan</CardTitle>
-                        </div>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                            <Input
-                                placeholder="Cari siswa..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9 w-64"
-                            />
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Siswa</TableHead>
-                                <TableHead>Kelas</TableHead>
+                                <TableHead className="pl-6">Siswa</TableHead>
+                                <TableHead>Status</TableHead>
                                 <TableHead>Ujian</TableHead>
-                                <TableHead>Progress Anda</TableHead>
-                                <TableHead className="text-right">Aksi</TableHead>
+                                <TableHead className="text-right pr-6">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredSheets.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">
-                                        <ClipboardCheck className="h-12 w-12 mx-auto mb-3 text-slate-300" />
-                                        <p>Tidak ada data</p>
+                                    <TableCell colSpan={4} className="text-center py-12 text-slate-500">
+                                        <div className="flex flex-col items-center">
+                                            <Users className="h-12 w-12 text-slate-200 mb-3" />
+                                            <p className="font-medium">Tidak ada siswa ditemukan</p>
+                                            <p className="text-sm">Untuk kelas ini.</p>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 filteredSheets.map((sheet) => {
-                                    const mySheetItems = sheet.completion_items?.filter(i => i.teacher_id === teacherId) || []
-                                    const completedCount = mySheetItems.filter(i => i.is_completed).length
-                                    const totalCount = mySheetItems.length
+                                    // Find item for CURRENT selected Subject
+                                    const subjectItem = sheet.completion_items?.find(i => i.subject_id === selectedAssignment.subject_id)
+                                    const isCompleted = subjectItem?.is_completed
 
                                     return (
-                                        <TableRow key={sheet.id}>
-                                            <TableCell>
+                                        <TableRow key={sheet.id} className="hover:bg-slate-50">
+                                            <TableCell className="pl-6">
                                                 <div>
                                                     <p className="font-medium">{sheet.student?.full_name}</p>
                                                     <p className="text-xs text-slate-500">{sheet.student?.nisn}</p>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{sheet.class?.name}</TableCell>
+                                            <TableCell>
+                                                {isCompleted ? (
+                                                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200 shadow-none">
+                                                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                                                        Tuntas
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="text-slate-500 bg-slate-50 border-slate-200">
+                                                        Belum Tuntas
+                                                    </Badge>
+                                                )}
+                                            </TableCell>
                                             <TableCell>
                                                 <Badge variant="outline">{sheet.exam?.name}</Badge>
                                             </TableCell>
-                                            <TableCell>
-                                                {totalCount > 0 ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
-                                                            <div
-                                                                className="h-full bg-green-500 rounded-full transition-all"
-                                                                style={{ width: `${(completedCount / totalCount) * 100}%` }}
-                                                            />
-                                                        </div>
-                                                        <span className="text-sm text-slate-600">{completedCount}/{totalCount}</span>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-slate-400">-</span>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-right">
+                                            <TableCell className="text-right pr-6">
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
                                                     onClick={() => setSelectedSheet(sheet)}
                                                 >
                                                     <Eye className="h-4 w-4 mr-1" />
-                                                    Detail
+                                                    Detail & Nilai
                                                 </Button>
                                             </TableCell>
                                         </TableRow>

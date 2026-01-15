@@ -33,13 +33,23 @@ export default async function CompletionSheetsPage() {
         .in('class_id', classIds.length ? classIds : ['00000000-0000-0000-0000-000000000000'])
         .order('updated_at', { ascending: false })
 
-    // Filter items that teacher is responsible for
-    const teacherSubjectIds = assignments?.map(a => a.subject_id) || []
+    // Fetch full assignment details for cards
+    const { data: fullAssignments } = await supabase
+        .from('teacher_assignments')
+        .select(`
+            id,
+            class_id,
+            subject_id,
+            class:classes(id, name),
+            subject:subjects(id, name, code)
+        `)
+        .eq('teacher_id', user.id)
+        .eq('is_active', true)
 
     return (
         <CompletionSheetsClient
             sheets={sheets || []}
-            teacherSubjectIds={teacherSubjectIds}
+            assignments={fullAssignments || []}
             teacherId={user.id}
         />
     )
