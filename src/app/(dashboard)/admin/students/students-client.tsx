@@ -15,10 +15,11 @@ import {
 } from '@/components/ui/dialog'
 import { Plus, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { updateStudent, deleteStudent, createStudent } from '@/actions/admin' // Assumes these exist now
+import { updateStudent, deleteStudent, createStudent } from '@/actions/admin'
 import type { Profile } from '@/types/database'
 import { DataTable } from '@/components/ui/data-table'
 import { getColumns } from './columns'
+import { StudentImportWizard } from './import-wizard'
 
 interface StudentsClientProps {
     students: Profile[]
@@ -91,74 +92,77 @@ export function StudentsClient({
                     <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Data Siswa</h1>
                     <p className="text-slate-500 mt-1">Kelola data siswa terdaftar</p>
                 </div>
-                <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditingStudent(null) }}>
-                    <DialogTrigger asChild>
-                        <Button className="gradient-primary border-0">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Tambah Siswa
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>{editingStudent ? 'Edit Data Siswa' : 'Tambah Siswa Baru'}</DialogTitle>
-                            <DialogDescription>
-                                {editingStudent ? 'Perbarui informasi profil siswa' : 'Masukkan data siswa baru. Akun akan dibuat otomatis.'}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="full_name">Nama Lengkap</Label>
-                                <Input
-                                    id="full_name"
-                                    name="full_name"
-                                    defaultValue={editingStudent?.full_name}
-                                    required
-                                    placeholder="Contoh: Ahmad Fauzi"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="nisn">NISN</Label>
-                                <Input
-                                    id="nisn"
-                                    name="nisn"
-                                    defaultValue={editingStudent?.nisn || ''}
-                                    placeholder="Nomor Induk Siswa Nasional"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="phone">No. HP</Label>
-                                <Input
-                                    id="phone"
-                                    name="phone"
-                                    defaultValue={editingStudent?.phone || ''}
-                                    placeholder="08..."
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
-                                <Input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    defaultValue={editingStudent?.email || ''}
-                                    disabled={!!editingStudent}
-                                    required
-                                    className={editingStudent ? "bg-slate-100" : ""}
-                                    placeholder="email@sekolah.sch.id"
-                                />
-                            </div>
-                            <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                                    Batal
-                                </Button>
-                                <Button type="submit" className="gradient-primary border-0" disabled={loading}>
-                                    {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                                    Simpan
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                <div className="flex gap-2">
+                    <StudentImportWizard />
+                    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditingStudent(null) }}>
+                        <DialogTrigger asChild>
+                            <Button className="gradient-primary border-0">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Tambah Siswa
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>{editingStudent ? 'Edit Data Siswa' : 'Tambah Siswa Baru'}</DialogTitle>
+                                <DialogDescription>
+                                    {editingStudent ? 'Perbarui informasi profil siswa' : 'Masukkan data siswa baru. Akun akan dibuat otomatis.'}
+                                </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="full_name">Nama Lengkap</Label>
+                                    <Input
+                                        id="full_name"
+                                        name="full_name"
+                                        defaultValue={editingStudent?.full_name}
+                                        required
+                                        placeholder="Contoh: Ahmad Fauzi"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="nisn">NISN</Label>
+                                    <Input
+                                        id="nisn"
+                                        name="nisn"
+                                        defaultValue={editingStudent?.nisn || ''}
+                                        placeholder="Nomor Induk Siswa Nasional"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone">No. HP</Label>
+                                    <Input
+                                        id="phone"
+                                        name="phone"
+                                        defaultValue={editingStudent?.phone || ''}
+                                        placeholder="08..."
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="email">Email</Label>
+                                    <Input
+                                        id="email"
+                                        name="email"
+                                        type="email"
+                                        defaultValue={editingStudent?.email || ''}
+                                        disabled={!!editingStudent}
+                                        required
+                                        className={editingStudent ? "bg-slate-100" : ""}
+                                        placeholder="email@sekolah.sch.id"
+                                    />
+                                </div>
+                                <DialogFooter>
+                                    <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                                        Batal
+                                    </Button>
+                                    <Button type="submit" className="gradient-primary border-0" disabled={loading}>
+                                        {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                        Simpan
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </div>
 
             <DataTable
