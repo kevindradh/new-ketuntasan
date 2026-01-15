@@ -27,7 +27,11 @@ import Papa from 'papaparse'
 import { createStudent } from '@/actions/admin'
 import { useRouter } from 'next/navigation'
 
-export function StudentImportWizard() {
+interface StudentImportWizardProps {
+    classes: { id: string, name: string }[]
+}
+
+export function StudentImportWizard({ classes }: StudentImportWizardProps) {
     const router = useRouter()
     const [open, setOpen] = useState(false)
     const [step, setStep] = useState<1 | 2 | 3>(1) // 1: Upload, 2: Preview, 3: Process
@@ -39,7 +43,7 @@ export function StudentImportWizard() {
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const downloadTemplate = () => {
-        const csvContent = "data:text/csv;charset=utf-8," + "full_name,email,nisn,phone\nJohn Doe,john@example.com,1234567890,08123456789\nJane Smith,jane@example.com,0987654321,08987654321"
+        const csvContent = "data:text/csv;charset=utf-8," + "full_name,email,nisn,phone,kelas\nJohn Doe,john@example.com,1234567890,08123456789,X RPL 1\nJane Smith,jane@example.com,0987654321,08987654321,XI TKJ 2"
         const encodedUri = encodeURI(csvContent)
         const link = document.createElement("a")
         link.setAttribute("href", encodedUri)
@@ -100,6 +104,29 @@ export function StudentImportWizard() {
                     formData.append('email', row.email)
                     formData.append('nisn', row.nisn)
                     if (row.phone) formData.append('phone', row.phone)
+
+                    // Class Assignment Logic
+                    if (row.kelas) {
+                        const matchedClass = classes.find(c => c.name.toLowerCase() === row.kelas.trim().toLowerCase())
+                        if (matchedClass) {
+                            formData.append('class_id', matchedClass.id)
+                        } else {
+                            // Warn but proceed? Or error?
+                            // User asked to "match with existing class name".
+                            // It implies if it doesn't match, we can't assign.
+                            // Let's treat it as a warning in the results but still create the student (unassigned)
+                            // OR we could fail the row. Let's fail the row for clearer data integrity if they intended to assign.
+                            // However, strictly adhering "create student" might be safer.
+                            // Let's try to match logic: "If class provided but not found -> ERROR" is safer than silent fail.
+
+                            // Actually, let's allow creation but log warning in errors?
+                            // "Row X created but class 'Foo' not found"
+
+                            // For this iteration, let's treat it as an error to ensure they fix the CSV.
+                            throw new Error(`Kelas '${row.kelas}' tidak ditemukan di sistem.`)
+                        }
+                    }
+
                     // Default password logic handled on server if needed or generate one
                     // Assuming createStudent handles basic creation with default password
 
@@ -209,6 +236,7 @@ export function StudentImportWizard() {
                                         <TableHead>Nama</TableHead>
                                         <TableHead>Email</TableHead>
                                         <TableHead>NISN</TableHead>
+                                        <TableHead>Kelas</TableHead>
                                         <TableHead>Status</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -221,7 +249,16 @@ export function StudentImportWizard() {
                                                 <TableCell>{row.email || '-'}</TableCell>
                                                 <TableCell>{row.nisn || '-'}</TableCell>
                                                 <TableCell>
-                                                    {isValid
+                                                    {row.kelas ? (
+                                                        classes.some(c => c.name.toLowerCase() === row.kelas.trim().toLowerCase())
+                                                            ? <span className="text-green-600 font-medium">{row.kelas}</span>
+                                                            : <span className="text-red-500 font-medium flex items-center gap-1"><AlertCircle className="h-3 w-3" />Undefined: {row.kelas}</span>
+                                                    ) : (
+                                                        <span className="text-slate-400 italic">No Class</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {isValid && (!row.kelas || classes.some(c => c.name.toLowerCase() === row.kelas.trim().toLowerCase()))
                                                         ? <CheckCircle className="h-4 w-4 text-green-500" />
                                                         : <AlertCircle className="h-4 w-4 text-red-500" />
                                                     }

@@ -22,14 +22,16 @@ import { getColumns } from './columns'
 import { StudentImportWizard } from './import-wizard'
 
 interface StudentsClientProps {
-    students: Profile[]
+    items: Profile[]
+    classes: { id: string, name: string }[]
     pageCount: number
     currentPage: number
     totalItems: number
 }
 
 export function StudentsClient({
-    students,
+    items,
+    classes,
     pageCount,
     currentPage,
     totalItems
@@ -93,7 +95,7 @@ export function StudentsClient({
                     <p className="text-slate-500 mt-1">Kelola data siswa terdaftar</p>
                 </div>
                 <div className="flex gap-2">
-                    <StudentImportWizard />
+                    <StudentImportWizard classes={classes} />
                     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditingStudent(null) }}>
                         <DialogTrigger asChild>
                             <Button className="gradient-primary border-0">
@@ -167,7 +169,7 @@ export function StudentsClient({
 
             <DataTable
                 columns={columns}
-                data={students}
+                data={items}
                 pageCount={pageCount}
                 currentPage={currentPage}
                 totalItems={totalItems}

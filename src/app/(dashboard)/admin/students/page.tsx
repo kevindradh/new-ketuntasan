@@ -49,11 +49,18 @@ export default async function StudentsPage({
         console.error("Error fetching students:", error)
     }
 
+    // 2. Fetch Classes for Filter/Import Validation
+    const { data: classes } = await supabase
+        .from('classes')
+        .select('id, name')
+        .order('name')
+
     const pageCount = count ? Math.ceil(count / perPage) : 0
 
     return (
         <StudentsClient
-            students={students || []}
+            items={students || []}
+            classes={classes || []}
             pageCount={pageCount}
             currentPage={page}
             totalItems={count || 0}

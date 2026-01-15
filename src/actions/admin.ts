@@ -360,7 +360,28 @@ export async function createStudent(formData: FormData) {
         return { error: `Gagal assign role: ${roleError.message}` }
     }
 
+    // 4. Enroll in Class (Optional)
+    const classId = formData.get('class_id') as string
+    if (classId) {
+        // We reuse the logic but do direct insert since we have admin client here and know it's a new student (no existing enrollment)
+        const { error: enrollError } = await supabaseAdmin
+            .from('class_students')
+            .insert({
+                class_id: classId,
+                student_id: userId
+            })
+
+        if (enrollError) {
+            // Should we fail the whole creation? Maybe just log/return warning?
+            // For now, let's treat it as non-fatal but impactful.
+            console.error("Failed to auto-enroll student:", enrollError)
+            // We return success but maybe could include a warning note if our return type supported it.
+        }
+    }
+
     revalidatePath('/admin/students')
+    if (classId) revalidatePath(`/admin/classes/${classId}`)
+
     return { success: true }
 }
 
