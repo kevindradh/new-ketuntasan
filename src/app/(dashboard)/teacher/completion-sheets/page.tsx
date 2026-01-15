@@ -46,10 +46,29 @@ export default async function CompletionSheetsPage() {
         .eq('teacher_id', user.id)
         .eq('is_active', true)
 
+    // Transform data to match client props expectations
+    // Supabase returns arrays for joined relations, we need single objects
+    const formattedAssignments = fullAssignments?.map(a => ({
+        ...a,
+        class: Array.isArray(a.class) ? a.class[0] : a.class,
+        subject: Array.isArray(a.subject) ? a.subject[0] : a.subject
+    })) || []
+
+    const formattedSheets = sheets?.map(s => ({
+        ...s,
+        student: Array.isArray(s.student) ? s.student[0] : s.student,
+        exam: Array.isArray(s.exam) ? s.exam[0] : s.exam,
+        class: Array.isArray(s.class) ? s.class[0] : s.class,
+        completion_items: s.completion_items?.map((i: any) => ({
+            ...i,
+            subject: Array.isArray(i.subject) ? i.subject[0] : i.subject
+        }))
+    })) || []
+
     return (
         <CompletionSheetsClient
-            sheets={sheets || []}
-            assignments={fullAssignments || []}
+            sheets={formattedSheets as any}
+            assignments={formattedAssignments as any}
             teacherId={user.id}
         />
     )
