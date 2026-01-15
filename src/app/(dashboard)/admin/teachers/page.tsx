@@ -1,40 +1,53 @@
 import { createClient } from '@/lib/supabase/server'
 import { TeachersClient } from './teachers-client'
 
-export default async function TeachersPage() {
+interface SearchParams {
+    page?: string
+    per_page?: string
+    query?: string
+}
+
+export default async function TeachersPage({
+    searchParams,
+}: {
+    searchParams: Promise<SearchParams>
+}) {
+    const params = await searchParams
+    const page = Number(params.page) || 1
+    const perPage = Number(params.per_page) || 10
+    const query = params.query || ''
+
     const supabase = await createClient()
 
-    const { data: teacherRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'TEACHER')
+    // Query for profiles with 'TEACHER' role
+    let queryBuilder = supabase
+        .from('profiles')
+        .select('*, user_roles!inner(role)', { count: 'exact' })
+        .eq('user_roles.role', 'TEACHER') as any
 
-    const teacherIds = teacherRoles?.map(r => r.user_id) || []
+    if (query) {
+        queryBuilder = queryBuilder.or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
+    }
 
-    const [{ data: assignments }, { data: teachers }, { data: subjects }, { data: classes }] = await Promise.all([
-        supabase
-            .from('teacher_assignments')
-            .select(`
-        *,
-        teacher:profiles!teacher_assignments_teacher_id_fkey(id, full_name),
-        subject:subjects(id, name, code),
-        class:classes(id, name)
-      `)
-            .order('created_at', { ascending: false }),
-        supabase
-            .from('profiles')
-            .select('id, full_name')
-            .in('id', teacherIds.length > 0 ? teacherIds : ['00000000-0000-0000-0000-000000000000']),
-        supabase.from('subjects').select('id, name, code').eq('is_active', true),
-        supabase.from('classes').select('id, name, academic_year').eq('is_active', true),
-    ])
+    const from = (page - 1) * perPage
+    const to = from + perPage - 1
+
+    const { data: teachers, count, error } = await queryBuilder
+        .order('full_name')
+        .range(from, to)
+
+    if (error) {
+        console.error("Error fetching teachers:", error)
+    }
+
+    const pageCount = count ? Math.ceil(count / perPage) : 0
 
     return (
         <TeachersClient
-            assignments={(assignments || []) as any}
-            teachers={(teachers || []) as { id: string; full_name: string }[]}
-            subjects={(subjects || []) as { id: string; name: string; code: string }[]}
-            classes={(classes || []) as { id: string; name: string; academic_year: string }[]}
+            items={teachers || []}
+            pageCount={pageCount}
+            currentPage={page}
+            totalItems={count || 0}
         />
     )
 }

@@ -294,6 +294,91 @@ export async function removeStudentFromClass(id: string) {
 
 import { createAdminClient } from '@/lib/supabase/admin'
 
+// ========== TEACHERS ==========
+export async function createTeacher(formData: FormData) {
+    const supabaseAdmin = createAdminClient()
+
+    const email = formData.get('email') as string
+    const fullName = formData.get('full_name') as string
+    const phone = formData.get('phone') as string
+    // Assuming 'nip' is stored in 'nisn' column or 'nip' column if it existed.
+    // Based on grep, 'nip' might not exist. Let's stick to standard profile fields.
+    // If the user wants NIP later, we can add it. For now, name/email/phone.
+    // Default password for teachers
+    const password = "guru" + (phone?.slice(-4) || "12345")
+
+    // 1. Create Auth User
+    const { data: userData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+            full_name: fullName,
+        }
+    })
+
+    if (authError) return { error: `Gagal membuat user: ${authError.message}` }
+    if (!userData.user) return { error: "Gagal membuat user: Data user tidak kembali" }
+
+    const userId = userData.user.id
+
+    // 2. Insert into Profiles
+    const { error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .upsert({
+            id: userId,
+            full_name: fullName,
+            email: email,
+            phone: phone || null,
+            updated_at: new Date().toISOString(),
+        })
+
+    if (profileError) {
+        await supabaseAdmin.auth.admin.deleteUser(userId)
+        return { error: `Gagal membuat profil: ${profileError.message}` }
+    }
+
+    // 3. Assign Role
+    const { error: roleError } = await supabaseAdmin
+        .from('user_roles')
+        .insert({
+            user_id: userId,
+            role: 'TEACHER'
+        })
+
+    if (roleError) {
+        return { error: `Gagal assign role: ${roleError.message}` }
+    }
+
+    revalidatePath('/admin/teachers')
+    return { success: true }
+}
+
+export async function updateTeacher(id: string, formData: FormData) {
+    const supabaseAdmin = createAdminClient()
+
+    const { error } = await supabaseAdmin.from('profiles').update({
+        full_name: formData.get('full_name') as string,
+        phone: formData.get('phone') as string || null,
+    }).eq('id', id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/teachers')
+    return { success: true }
+}
+
+export async function deleteTeacher(id: string) {
+    const supabaseAdmin = createAdminClient()
+
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/teachers')
+    return { success: true }
+}
+
 // ========== STUDENTS ==========
 export async function createStudent(formData: FormData) {
     const supabase = await createClient()
