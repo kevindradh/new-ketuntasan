@@ -49,9 +49,16 @@ interface CompletionSheetsClientProps {
 export function CompletionSheetsClient({ sheets, assignments, teacherId }: CompletionSheetsClientProps) {
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedAssignment, setSelectedAssignment] = useState<typeof assignments[0] | null>(null)
-    const [selectedSheet, setSelectedSheet] = useState<typeof sheets[0] | null>(null)
+    const [selectedSheetId, setSelectedSheetId] = useState<string | null>(null)
     const [loading, setLoading] = useState<string | null>(null)
     const [notes, setNotes] = useState<Record<string, string>>({})
+
+    // Derived state for selected sheet to ensure it's always fresh
+    const selectedSheet = sheets.find(s => s.id === selectedSheetId) || null
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 10
 
     // Bulk Action State
     const [selectedItemIds, setSelectedItemIds] = useState<string[]>([])
@@ -68,6 +75,13 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
         }
         return true
     })
+
+    // Pagination Logic
+    const totalPages = Math.ceil(filteredSheets.length / itemsPerPage)
+    const paginatedSheets = filteredSheets.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    )
 
     const handleToggle = async (itemId: string) => {
         setLoading(itemId)
@@ -87,17 +101,21 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
         return sheet.completion_items?.find(i => i.subject_id === selectedAssignment?.subject_id)
     }
 
-    const uncompletedSheets = filteredSheets.filter(s => {
+    // Uncompleted sheets on CURRENT PAGE (for header checkbox which usually selects visible items)
+    const uncompletedSheetsOnPage = paginatedSheets.filter(s => {
         const item = getSubjectItem(s)
         return item && !item.is_completed // Only select items that are NOT completed
     })
 
     const handleSelectAll = (checked: boolean) => {
         if (checked) {
-            const allIds = uncompletedSheets.map(s => getSubjectItem(s)?.id).filter(id => id) as string[]
-            setSelectedItemIds(allIds)
+            const pageIds = uncompletedSheetsOnPage.map(s => getSubjectItem(s)?.id).filter(id => id) as string[]
+            // Add visible uncompleted items to selection, avoiding duplicates
+            setSelectedItemIds(prev => Array.from(new Set([...prev, ...pageIds])))
         } else {
-            setSelectedItemIds([])
+            // Unselect items visible on this page
+            const pageIds = uncompletedSheetsOnPage.map(s => getSubjectItem(s)?.id).filter(id => id) as string[]
+            setSelectedItemIds(prev => prev.filter(id => !pageIds.includes(id)))
         }
     }
 
@@ -201,7 +219,12 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                     <Button
                         variant="ghost"
                         className="pl-0 hover:pl-2 transition-all mb-1 text-slate-500 hover:text-slate-900"
-                        onClick={() => { setSelectedAssignment(null); setSelectedItemIds([]); }}
+                        onClick={() => {
+                            setSelectedAssignment(null);
+                            setSelectedItemIds([]);
+                            setSearchQuery('');
+                            setCurrentPage(1);
+                        }}
                     >
                         <ChevronLeft className="h-4 w-4 mr-1" />
                         Kembali ke Daftar Kelas
@@ -223,7 +246,10 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                         <Input
                             placeholder="Cari siswa..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value)
+                                setCurrentPage(1) // Reset page on search
+                            }}
                             className="pl-9 w-64 lg:w-80"
                         />
                     </div>
@@ -277,7 +303,7 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
             </Dialog>
 
             {/* Sheet Detail Dialog (Single View) */}
-            <Dialog open={!!selectedSheet} onOpenChange={(v) => !v && setSelectedSheet(null)}>
+            <Dialog open={!!selectedSheetId} onOpenChange={(v) => !v && setSelectedSheetId(null)}>
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Detail Ketuntasan</DialogTitle>
@@ -342,7 +368,7 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                             <TableRow>
                                 <TableHead className="w-12 text-center text-slate-400">
                                     <Checkbox
-                                        checked={uncompletedSheets.length > 0 && selectedItemIds.length === uncompletedSheets.length}
+                                        checked={uncompletedSheetsOnPage.length > 0 && selectedItemIds.length >= uncompletedSheetsOnPage.length}
                                         onCheckedChange={(c) => handleSelectAll(!!c)}
                                         aria-label="Select all"
                                     />
@@ -354,18 +380,18 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredSheets.length === 0 ? (
+                            {paginatedSheets.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center py-12 text-slate-500">
                                         <div className="flex flex-col items-center">
                                             <Users className="h-12 w-12 text-slate-200 mb-3" />
                                             <p className="font-medium">Tidak ada siswa ditemukan</p>
-                                            <p className="text-sm">Untuk kelas ini.</p>
+                                            <p className="text-sm">Untuk kelas ini pada halaman ini.</p>
                                         </div>
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                filteredSheets.map((sheet) => {
+                                paginatedSheets.map((sheet) => {
                                     const subjectItem = sheet.completion_items?.find(i => i.subject_id === selectedAssignment.subject_id)
                                     const isCompleted = subjectItem?.is_completed
                                     const itemId = subjectItem?.id
@@ -405,7 +431,7 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={() => setSelectedSheet(sheet)}
+                                                    onClick={() => setSelectedSheetId(sheet.id)}
                                                 >
                                                     <Eye className="h-4 w-4 mr-1" />
                                                     Detail & Nilai
@@ -417,6 +443,33 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                             )}
                         </TableBody>
                     </Table>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between px-4 py-4 border-t">
+                            <div className="text-sm text-slate-500">
+                                Halaman {currentPage} dari {totalPages}
+                            </div>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    Sebelumnya
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Selanjutnya
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
