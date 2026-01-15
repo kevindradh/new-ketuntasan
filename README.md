@@ -1,36 +1,118 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Si-Tuntas
 
-## Getting Started
+Sistem Ketuntasan Mata Pelajaran Siswa SMK - Digital platform untuk mengelola dan memvalidasi ketuntasan mata pelajaran siswa sebelum mengikuti ujian.
 
-First, run the development server:
+## 🎯 Features
+
+- **Role-Based Access Control** - 5 user roles: Admin, Teacher, Homeroom, Counselor, Student
+- **Digital Completion Sheets** - Replace paper-based tracking
+- **Multi-Level Approval** - Teacher → Homeroom → Counselor workflow
+- **Real-time Notifications** - Instant updates for all stakeholders
+- **PDF Generation** - Download completion certificates
+
+## 🛠 Tech Stack
+
+- **Frontend**: Next.js 14 (App Router)
+- **Styling**: TailwindCSS + shadcn/ui
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Real-time**: Supabase Realtime
+- **PDF**: jsPDF
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Supabase account
+
+### Installation
 
 ```bash
+# Clone repository
+git clone https://github.com/your-username/si-tuntas.git
+cd si-tuntas
+
+# Install dependencies
+npm install
+
+# Copy environment variables
+cp .env.example .env.local
+
+# Update .env.local with your Supabase credentials
+# NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+# NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 👤 Demo Accounts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@demo.situntas.id | password123 |
+| Teacher | budi@demo.situntas.id | password123 |
+| Homeroom | dewi@demo.situntas.id | password123 |
+| Counselor | wahyu@demo.situntas.id | password123 |
+| Student | andi@demo.situntas.id | password123 |
 
-## Learn More
+## 📁 Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/              # Next.js App Router
+│   ├── (auth)/       # Authentication pages
+│   ├── (dashboard)/  # Dashboard pages
+│   │   ├── admin/    # Admin pages
+│   │   ├── teacher/  # Teacher pages
+│   │   ├── homeroom/ # Homeroom pages
+│   │   ├── counselor/# Counselor pages
+│   │   └── student/  # Student pages
+├── actions/          # Server actions
+├── components/       # React components
+│   ├── layout/       # Layout components
+│   └── ui/           # shadcn/ui components
+├── hooks/            # React hooks
+├── lib/              # Utility functions
+│   └── supabase/     # Supabase clients
+└── types/            # TypeScript types
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🔐 Environment Variables
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
+| `NEXT_PUBLIC_APP_URL` | Application URL |
 
-## Deploy on Vercel
+## 📊 Database Schema
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Key tables:
+- `profiles` - User profiles
+- `user_roles` - Role assignments
+- `subjects` - Subject master data
+- `classes` - Class management
+- `exams` - Exam periods
+- `completion_sheets` - Per-student completion tracking
+- `completion_items` - Per-subject completion status
+- `notifications` - Real-time notifications
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🚀 Deploy to Vercel
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/si-tuntas)
+
+1. Click the button above or go to [Vercel](https://vercel.com)
+2. Import your repository
+3. Add environment variables:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_APP_URL`
+4. Deploy!
+
+## 📝 License
+
+MIT License
