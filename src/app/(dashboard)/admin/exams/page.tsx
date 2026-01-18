@@ -1,14 +1,35 @@
 import { createClient } from '@/lib/supabase/server'
 import { ExamsClient } from './exams-client'
 
-export default async function ExamsPage() {
+export default async function ExamsPage({
+    searchParams,
+}: {
+    searchParams: { page?: string, query?: string }
+}) {
     const supabase = await createClient()
 
-    const [{ data: exams }, { data: classes }] = await Promise.all([
-        supabase
-            .from('exams')
-            .select('*')
-            .order('start_date', { ascending: false }),
+    // Parse search params
+    const currentPage = Number(searchParams?.page) || 1
+    const query = searchParams?.query || ''
+    const pageSize = 10
+
+    // Build query for exams
+    let dbQuery = supabase
+        .from('exams')
+        .select('*', { count: 'exact' })
+
+    if (query) {
+        dbQuery = dbQuery.or(`name.ilike.%${query}%,exam_type.ilike.%${query}%`)
+    }
+
+    // Apply pagination
+    const from = (currentPage - 1) * pageSize
+    const to = from + pageSize - 1
+
+    const [{ data: exams, count }, { data: classes }] = await Promise.all([
+        dbQuery
+            .order('start_date', { ascending: false })
+            .range(from, to),
         supabase
             .from('classes')
             .select('id, name, grade_level, major, academic_year')
@@ -16,10 +37,16 @@ export default async function ExamsPage() {
             .order('name'),
     ])
 
+    const totalItems = count || 0
+    const pageCount = Math.ceil(totalItems / pageSize)
+
     return (
         <ExamsClient
-            exams={exams || []}
+            items={exams || []}
             classes={(classes || []) as { id: string; name: string; grade_level: number; major?: string | null; academic_year: string }[]}
+            pageCount={pageCount}
+            currentPage={currentPage}
+            totalItems={totalItems}
         />
     )
 }

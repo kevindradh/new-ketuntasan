@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
     Dialog,
@@ -22,20 +21,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, Trash2, FileText, Loader2, Search, PlayCircle } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, PlayCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { createExam, updateExam, deleteExam, generateCompletionSheets } from '@/actions/admin'
 import { formatDate } from '@/lib/utils'
 import type { Exam } from '@/types/database'
+import { DataTable } from '@/components/ui/data-table'
+import { ColumnDef } from "@tanstack/react-table"
 
 interface ClassForExam {
     id: string
@@ -46,23 +39,20 @@ interface ClassForExam {
 }
 
 interface ExamsClientProps {
-    exams: Exam[]
+    items: Exam[]
     classes: ClassForExam[]
+    pageCount: number
+    currentPage: number
+    totalItems: number
 }
 
-export function ExamsClient({ exams, classes }: ExamsClientProps) {
+export function ExamsClient({ items, classes, pageCount, currentPage, totalItems }: ExamsClientProps) {
     const [open, setOpen] = useState(false)
     const [generateOpen, setGenerateOpen] = useState(false)
     const [editingExam, setEditingExam] = useState<Exam | null>(null)
     const [selectedExam, setSelectedExam] = useState<Exam | null>(null)
     const [selectedClasses, setSelectedClasses] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
-    const [searchQuery, setSearchQuery] = useState('')
-
-    const filteredExams = exams.filter(e =>
-        e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.exam_type.toLowerCase().includes(searchQuery.toLowerCase())
-    )
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -123,6 +113,70 @@ export function ExamsClient({ exams, classes }: ExamsClientProps) {
             toast.success('Ujian dihapus')
         }
     }
+
+    const columns: ColumnDef<Exam>[] = [
+        {
+            accessorKey: "name",
+            header: "Nama Ujian",
+            cell: ({ row }) => <span className="font-medium">{row.getValue("name")}</span>
+        },
+        {
+            accessorKey: "exam_type",
+            header: "Tipe",
+            cell: ({ row }) => <Badge variant="outline">{row.getValue("exam_type")}</Badge>
+        },
+        {
+            accessorKey: "grade_level",
+            header: "Tingkat",
+            cell: ({ row }) => <span>Kelas {row.getValue("grade_level")}</span>
+        },
+        {
+            accessorKey: "academic_year",
+            header: "Tahun Ajaran",
+        },
+        {
+            id: "period",
+            header: "Periode",
+            cell: ({ row }) => (
+                <span className="text-sm text-slate-500">
+                    {formatDate(row.original.start_date)} - {formatDate(row.original.end_date)}
+                </span>
+            )
+        },
+        {
+            id: "actions",
+            cell: ({ row }) => {
+                const exam = row.original
+                return (
+                    <div className="flex items-center justify-end gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => { setSelectedExam(exam); setGenerateOpen(true) }}
+                        >
+                            <PlayCircle className="h-4 w-4 mr-1" />
+                            Generate
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => { setEditingExam(exam); setOpen(true) }}
+                        >
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDelete(exam.id)}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                )
+            }
+        }
+    ]
 
     const currentYear = new Date().getFullYear()
     const academicYears = [
@@ -298,90 +352,14 @@ export function ExamsClient({ exams, classes }: ExamsClientProps) {
                 </DialogContent>
             </Dialog>
 
-            <Card className="border-0 shadow-md">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <CardTitle className="text-lg">Daftar Ujian</CardTitle>
-                            <CardDescription>{exams.length} ujian terdaftar</CardDescription>
-                        </div>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                            <Input
-                                placeholder="Cari..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9 w-64"
-                            />
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Nama</TableHead>
-                                <TableHead>Tipe</TableHead>
-                                <TableHead>Tingkat</TableHead>
-                                <TableHead>Tahun Ajaran</TableHead>
-                                <TableHead>Periode</TableHead>
-                                <TableHead className="text-right">Aksi</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredExams.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-8 text-slate-500">
-                                        <FileText className="h-12 w-12 mx-auto mb-3 text-slate-300" />
-                                        <p>Belum ada ujian</p>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                filteredExams.map((exam) => (
-                                    <TableRow key={exam.id}>
-                                        <TableCell className="font-medium">{exam.name}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">{exam.exam_type}</Badge>
-                                        </TableCell>
-                                        <TableCell>Kelas {exam.grade_level}</TableCell>
-                                        <TableCell>{exam.academic_year}</TableCell>
-                                        <TableCell className="text-sm text-slate-500">
-                                            {formatDate(exam.start_date)} - {formatDate(exam.end_date)}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => { setSelectedExam(exam); setGenerateOpen(true) }}
-                                                >
-                                                    <PlayCircle className="h-4 w-4 mr-1" />
-                                                    Generate
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => { setEditingExam(exam); setOpen(true) }}
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={() => handleDelete(exam.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            <DataTable
+                columns={columns}
+                data={items}
+                pageCount={pageCount}
+                currentPage={currentPage}
+                totalItems={totalItems}
+                searchPlaceholder="Cari ujian..."
+            />
         </div>
     )
 }
