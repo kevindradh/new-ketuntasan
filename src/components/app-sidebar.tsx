@@ -120,11 +120,6 @@ const roleMenus: Record<UserRole, { title: string; url: string; icon: React.Elem
       url: "/homeroom",
       icon: LayoutDashboard,
     },
-    {
-      title: "Approval",
-      url: "/homeroom/approval",
-      icon: UserCheck,
-    },
   ],
   COUNSELOR: [
     {
