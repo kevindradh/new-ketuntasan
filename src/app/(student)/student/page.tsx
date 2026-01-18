@@ -19,13 +19,12 @@ export default async function StudentPage() {
         .single()
 
     // Get current class membership
-    const { data: classMember } = await supabase
-        .from('class_members')
+    const { data: classStudent } = await supabase
+        .from('class_students')
         .select(`
             class:classes(id, name, grade_level, major)
         `)
         .eq('student_id', user.id)
-        .eq('is_active', true)
         .single()
 
     // Get completion sheets for this student
@@ -47,7 +46,7 @@ export default async function StudentPage() {
         .order('created_at', { ascending: false })
 
     // Handle potential array response from Supabase relation
-    const rawClass = classMember?.class
+    const rawClass = classStudent?.class
     const currentClassData = Array.isArray(rawClass) ? rawClass[0] : rawClass
 
     return (

@@ -234,7 +234,7 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
             </div>
 
             {/* Content */}
-            <div className="px-5 py-4 space-y-4 -mt-3">
+            <div className="px-5 py-4 space-y-4 mt-3">
                 {/* Active Exam Card */}
                 {latestSheet && (
                     <div className="bg-white rounded-2xl shadow-sm p-4">
