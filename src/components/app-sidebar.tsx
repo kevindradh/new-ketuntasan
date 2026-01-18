@@ -16,6 +16,7 @@ import {
   LogOut,
   Bell,
   ChevronRight,
+  Eye,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
@@ -124,6 +125,11 @@ const roleMenus: Record<UserRole, { title: string; url: string; icon: React.Elem
       title: "Approval",
       url: "/homeroom/approval",
       icon: UserCheck,
+    },
+    {
+      title: "Monitoring",
+      url: "/homeroom/monitoring",
+      icon: Eye,
     },
   ],
   COUNSELOR: [
