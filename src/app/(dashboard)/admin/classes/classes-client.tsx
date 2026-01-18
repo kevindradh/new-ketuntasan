@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
     Dialog,
     DialogContent,
@@ -21,35 +20,27 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, Trash2, School, Loader2, Search, Users } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClass, updateClass, deleteClass } from '@/actions/admin'
 import type { Class } from '@/types/database'
+import { DataTable } from '@/components/ui/data-table'
+import { ColumnDef } from "@tanstack/react-table"
+import Link from 'next/link'
 
 interface ClassesClientProps {
-    classes: (Class & { homeroom_teacher?: { id: string; full_name: string }; class_students?: { count: number }[] })[]
+    items: (Class & { homeroom_teacher?: { id: string; full_name: string }; class_students?: { count: number }[] })[]
     teachers: { id: string; full_name: string }[]
+    pageCount: number
+    currentPage: number
+    totalItems: number
 }
 
-export function ClassesClient({ classes, teachers }: ClassesClientProps) {
+export function ClassesClient({ items, teachers, pageCount, currentPage, totalItems }: ClassesClientProps) {
     const [open, setOpen] = useState(false)
     const [editingClass, setEditingClass] = useState<Class | null>(null)
     const [loading, setLoading] = useState(false)
-    const [searchQuery, setSearchQuery] = useState('')
-
-    const filteredClasses = classes.filter(c =>
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.major?.toLowerCase().includes(searchQuery.toLowerCase())
-    )
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -86,6 +77,78 @@ export function ClassesClient({ classes, teachers }: ClassesClientProps) {
             toast.success('Kelas dihapus')
         }
     }
+
+    const columns: ColumnDef<any>[] = [
+        {
+            accessorKey: "name",
+            header: "Nama Kelas",
+            cell: ({ row }) => <span className="font-medium">{row.getValue("name")}</span>
+        },
+        {
+            accessorKey: "grade_level",
+            header: "Tingkat",
+            cell: ({ row }) => <Badge variant="outline">Kelas {row.getValue("grade_level")}</Badge>
+        },
+        {
+            accessorKey: "major",
+            header: "Jurusan",
+            cell: ({ row }) => row.getValue("major") || "-"
+        },
+        {
+            accessorKey: "academic_year",
+            header: "Tahun Ajaran",
+        },
+        {
+            id: "homeroom",
+            header: "Wali Kelas",
+            cell: ({ row }) => row.original.homeroom_teacher?.full_name || "-"
+        },
+        {
+            id: "students",
+            header: "Siswa",
+            cell: ({ row }) => (
+                <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4 text-slate-400" />
+                    {row.original.class_students?.[0]?.count || 0}
+                </div>
+            )
+        },
+        {
+            id: "actions",
+            cell: ({ row }) => {
+                const cls = row.original
+                return (
+                    <div className="flex items-center justify-end gap-2">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            asChild
+                            title="Kelola Siswa"
+                        >
+                            <Link href={`/admin/classes/${cls.id}`}>
+                                <Users className="h-4 w-4" />
+                            </Link>
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => { setEditingClass(cls); setOpen(true) }}
+                        >
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDelete(cls.id)}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                )
+            }
+        }
+    ]
 
     const currentYear = new Date().getFullYear()
     const academicYears = [
@@ -194,97 +257,14 @@ export function ClassesClient({ classes, teachers }: ClassesClientProps) {
                 </Dialog>
             </div>
 
-            <Card className="border-0 shadow-md">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <CardTitle className="text-lg">Daftar Kelas</CardTitle>
-                            <CardDescription>{classes.length} kelas terdaftar</CardDescription>
-                        </div>
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                            <Input
-                                placeholder="Cari..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-9 w-64"
-                            />
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Nama</TableHead>
-                                <TableHead>Tingkat</TableHead>
-                                <TableHead>Jurusan</TableHead>
-                                <TableHead>Tahun Ajaran</TableHead>
-                                <TableHead>Wali Kelas</TableHead>
-                                <TableHead>Siswa</TableHead>
-                                <TableHead className="text-right">Aksi</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredClasses.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-8 text-slate-500">
-                                        <School className="h-12 w-12 mx-auto mb-3 text-slate-300" />
-                                        <p>Belum ada kelas</p>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                filteredClasses.map((cls) => (
-                                    <TableRow key={cls.id}>
-                                        <TableCell className="font-medium">{cls.name}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">Kelas {cls.grade_level}</Badge>
-                                        </TableCell>
-                                        <TableCell>{cls.major || '-'}</TableCell>
-                                        <TableCell>{cls.academic_year}</TableCell>
-                                        <TableCell>{cls.homeroom_teacher?.full_name || '-'}</TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-1">
-                                                <Users className="h-4 w-4 text-slate-400" />
-                                                {cls.class_students?.[0]?.count || 0}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    asChild
-                                                    title="Kelola Siswa"
-                                                >
-                                                    <a href={`/admin/classes/${cls.id}`}>
-                                                        <Users className="h-4 w-4" />
-                                                    </a>
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => { setEditingClass(cls); setOpen(true) }}
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={() => handleDelete(cls.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            <DataTable
+                columns={columns}
+                data={items}
+                pageCount={pageCount}
+                currentPage={currentPage}
+                totalItems={totalItems}
+                searchPlaceholder="Cari kelas atau jurusan..."
+            />
         </div>
     )
 }
