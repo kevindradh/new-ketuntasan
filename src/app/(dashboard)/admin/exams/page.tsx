@@ -4,13 +4,14 @@ import { ExamsClient } from './exams-client'
 export default async function ExamsPage({
     searchParams,
 }: {
-    searchParams: { page?: string, query?: string }
+    searchParams: Promise<{ page?: string, query?: string }>
 }) {
     const supabase = await createClient()
 
     // Parse search params
-    const currentPage = Number(searchParams?.page) || 1
-    const query = searchParams?.query || ''
+    const params = await searchParams
+    const currentPage = Number(params?.page) || 1
+    const query = params?.query || ''
     const pageSize = 10
 
     // Build query for exams
