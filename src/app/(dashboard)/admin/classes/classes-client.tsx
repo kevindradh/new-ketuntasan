@@ -30,14 +30,15 @@ import { ColumnDef } from "@tanstack/react-table"
 import Link from 'next/link'
 
 interface ClassesClientProps {
-    items: (Class & { homeroom_teacher?: { id: string; full_name: string }; class_students?: { count: number }[] })[]
+    items: (Class & { homeroom_teacher?: { id: string; full_name: string }; counselor?: { id: string; full_name: string }; class_students?: { count: number }[] })[]
     teachers: { id: string; full_name: string }[]
+    counselors: { id: string; full_name: string }[]
     pageCount: number
     currentPage: number
     totalItems: number
 }
 
-export function ClassesClient({ items, teachers, pageCount, currentPage, totalItems }: ClassesClientProps) {
+export function ClassesClient({ items, teachers, counselors, pageCount, currentPage, totalItems }: ClassesClientProps) {
     const [open, setOpen] = useState(false)
     const [editingClass, setEditingClass] = useState<Class | null>(null)
     const [loading, setLoading] = useState(false)
@@ -102,6 +103,11 @@ export function ClassesClient({ items, teachers, pageCount, currentPage, totalIt
             id: "homeroom",
             header: "Wali Kelas",
             cell: ({ row }) => row.original.homeroom_teacher?.full_name || "-"
+        },
+        {
+            id: "counselor",
+            header: "Guru BK",
+            cell: ({ row }) => row.original.counselor?.full_name || "-" // New column
         },
         {
             id: "students",
@@ -238,6 +244,21 @@ export function ClassesClient({ items, teachers, pageCount, currentPage, totalIt
                                         {teachers.map(teacher => (
                                             <SelectItem key={teacher.id} value={teacher.id}>
                                                 {teacher.full_name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="counselor_id">Guru BK</Label>
+                                <Select name="counselor_id" defaultValue={editingClass?.counselor_id || ''}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Pilih Guru BK" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {counselors.map(c => (
+                                            <SelectItem key={c.id} value={c.id}>
+                                                {c.full_name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

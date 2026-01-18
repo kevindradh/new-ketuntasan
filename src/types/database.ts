@@ -40,6 +40,8 @@ export interface Class {
     academic_year: string
     homeroom_teacher_id?: string
     homeroom_teacher?: Profile
+    counselor_id?: string
+    counselor?: Profile
     is_active: boolean
     created_at: string
     updated_at: string

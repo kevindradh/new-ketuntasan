@@ -55,6 +55,7 @@ export async function createClass(formData: FormData) {
         major: formData.get('major') as string || null,
         academic_year: formData.get('academic_year') as string,
         homeroom_teacher_id: formData.get('homeroom_teacher_id') as string || null,
+        counselor_id: formData.get('counselor_id') as string || null,
     })
 
     if (error) return { error: error.message }
@@ -72,6 +73,7 @@ export async function updateClass(id: string, formData: FormData) {
         major: formData.get('major') as string || null,
         academic_year: formData.get('academic_year') as string,
         homeroom_teacher_id: formData.get('homeroom_teacher_id') as string || null,
+        counselor_id: formData.get('counselor_id') as string || null,
     }).eq('id', id)
 
     if (error) return { error: error.message }

@@ -27,12 +27,26 @@ export default async function ClassesPage({
         .select('id, full_name')
         .in('id', teacherIds.length > 0 ? teacherIds : ['00000000-0000-0000-0000-000000000000'])
 
+    // Fetch counselors
+    const { data: counselorRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'COUNSELOR')
+
+    const counselorIds = counselorRoles?.map(r => r.user_id) || []
+
+    const { data: counselors } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', counselorIds.length > 0 ? counselorIds : ['00000000-0000-0000-0000-000000000000'])
+
     // Build query for classes
     let dbQuery = supabase
         .from('classes')
         .select(`
         *,
         homeroom_teacher:profiles!classes_homeroom_teacher_id_fkey(id, full_name),
+        counselor:profiles!classes_counselor_id_fkey(id, full_name),
         class_students(count)
       `, { count: 'exact' })
 
@@ -59,6 +73,7 @@ export default async function ClassesPage({
         <ClassesClient
             items={classes || []}
             teachers={(teachers || []) as { id: string; full_name: string }[]}
+            counselors={(counselors || []) as { id: string; full_name: string }[]}
             pageCount={pageCount}
             currentPage={currentPage}
             totalItems={totalItems}
