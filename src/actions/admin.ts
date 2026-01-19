@@ -502,13 +502,18 @@ export async function deleteStudent(id: string) {
 
 // ========== PASSWORD RESET ==========
 export async function resetUserPassword(userId: string, newPassword: string) {
-    const supabaseAdmin = createAdminClient()
+    try {
+        const supabaseAdmin = createAdminClient()
 
-    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-        password: newPassword
-    })
+        const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+            password: newPassword
+        })
 
-    if (error) return { error: error.message }
+        if (error) return { error: error.message }
 
-    return { success: true }
+        return { success: true }
+    } catch (err: any) {
+        console.error('Reset password error:', err)
+        return { error: `Gagal mereset password: ${err.message || 'Terjadi kesalahan sistem'}` }
+    }
 }

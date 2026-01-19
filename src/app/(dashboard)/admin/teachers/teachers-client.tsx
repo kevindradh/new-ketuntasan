@@ -91,15 +91,20 @@ export function TeachersClient({
             return
         }
 
-        const result = await resetUserPassword(selectedTeacherForReset.id, newPassword)
+        try {
+            const result = await resetUserPassword(selectedTeacherForReset.id, newPassword)
 
-        setLoading(false)
-        if (result.error) {
-            toast.error(result.error)
-        } else {
-            toast.success('Password guru berhasil direset')
-            setResetPasswordOpen(false)
-            setSelectedTeacherForReset(null)
+            if (result.error) {
+                toast.error(result.error)
+            } else {
+                toast.success('Password guru berhasil direset')
+                setResetPasswordOpen(false)
+                setSelectedTeacherForReset(null)
+            }
+        } catch (error) {
+            toast.error('Gagal mereset password. Silakan coba lagi.')
+        } finally {
+            setLoading(false)
         }
     }
 

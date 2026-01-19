@@ -84,15 +84,20 @@ export function StudentsClient({
             return
         }
 
-        const result = await resetUserPassword(selectedStudentForReset.id, newPassword)
+        try {
+            const result = await resetUserPassword(selectedStudentForReset.id, newPassword)
 
-        setLoading(false)
-        if (result.error) {
-            toast.error(result.error)
-        } else {
-            toast.success('Password siswa berhasil direset')
-            setResetPasswordOpen(false)
-            setSelectedStudentForReset(null)
+            if (result.error) {
+                toast.error(result.error)
+            } else {
+                toast.success('Password siswa berhasil direset')
+                setResetPasswordOpen(false)
+                setSelectedStudentForReset(null)
+            }
+        } catch (error) {
+            toast.error('Gagal mereset password. Silakan coba lagi.')
+        } finally {
+            setLoading(false)
         }
     }
 
