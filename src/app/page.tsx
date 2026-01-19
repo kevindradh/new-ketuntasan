@@ -31,11 +31,11 @@ export default function Home() {
                 Masuk
               </Button>
             </Link>
-            <Link href="/register">
+            {/* <Link href="/register">
               <Button className="gradient-primary border-0 font-medium">
                 Daftar
               </Button>
-            </Link>
+            </Link> */}
           </div>
         </div>
       </nav>
@@ -203,9 +203,9 @@ export default function Home() {
             <p className="text-lg text-blue-100 mb-8">
               Mulai gunakan Si-Tuntas untuk sekolah Anda sekarang juga
             </p>
-            <Link href="/register">
+            <Link href="/login">
               <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8 py-6 font-medium shadow-lg">
-                Daftar Gratis
+                Masuk Sekarang
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>

@@ -104,12 +104,7 @@ export default function LoginPage() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <Label htmlFor="password">Password</Label>
-                            <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
-                                Lupa password?
-                            </Link>
-                        </div>
+                        <Label htmlFor="password">Password</Label>
                         <div className="relative">
                             <Input
                                 id="password"
@@ -158,14 +153,9 @@ export default function LoginPage() {
                     </div>
                 </div>
             </CardContent>
-            <CardFooter className="flex flex-col space-y-4">
-                <div className="text-center text-sm text-slate-600">
-                    Belum punya akun?{' '}
-                    <Link href="/register" className="text-blue-600 font-medium hover:underline">
-                        Daftar sekarang
-                    </Link>
-                </div>
-            </CardFooter>
+            <div className="text-center text-sm text-slate-600">
+                Sistem Tertutup &copy; 2026 Si-Tuntas
+            </div>
         </Card>
     )
 }
