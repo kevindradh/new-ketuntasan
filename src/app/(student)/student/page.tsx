@@ -45,15 +45,28 @@ export default async function StudentPage() {
         .eq('student_id', user.id)
         .order('created_at', { ascending: false })
 
+
     // Handle potential array response from Supabase relation
     const rawClass = classStudent?.class
     const currentClassData = Array.isArray(rawClass) ? rawClass[0] : rawClass
+
+    // Normalize sheets data to handle potential array returns from Supabase joins
+    const formattedSheets = sheets?.map(sheet => ({
+        ...sheet,
+        homeroom_approver: Array.isArray(sheet.homeroom_approver) ? sheet.homeroom_approver[0] : sheet.homeroom_approver,
+        counselor_approver: Array.isArray(sheet.counselor_approver) ? sheet.counselor_approver[0] : sheet.counselor_approver,
+        completion_items: sheet.completion_items?.map((item: any) => ({
+            ...item,
+            teacher: Array.isArray(item.teacher) ? item.teacher[0] : item.teacher,
+            subject: Array.isArray(item.subject) ? item.subject[0] : item.subject
+        }))
+    })) || []
 
     return (
         <StudentMobileApp
             profile={profile}
             currentClass={currentClassData as { name: string; grade_level: number; major: string } | null}
-            sheets={sheets || []}
+            sheets={formattedSheets}
         />
     )
 }
