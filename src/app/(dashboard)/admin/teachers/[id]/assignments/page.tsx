@@ -7,7 +7,7 @@ export default async function TeacherAssignmentsPage({
     searchParams,
 }: {
     params: Promise<{ id: string }>
-    searchParams: Promise<{ page?: string, query?: string }>
+    searchParams: Promise<{ page?: string, query?: string, classId?: string }>
 }) {
     const { id: teacherId } = await params
     const search = await searchParams
