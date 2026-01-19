@@ -45,7 +45,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-full text-blue-700 text-sm font-medium mb-6">
             <Zap className="h-4 w-4" />
-            <span>Sistem Modern untuk SMK</span>
+            <span>Sistem Modern untuk SMKN 1 Bondowoso</span>
           </div>
 
           <h1 className="text-4xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
@@ -56,7 +56,7 @@ export default function Home() {
           </h1>
 
           <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto">
-            Sistem digital untuk memvalidasi ketuntasan mata pelajaran siswa SMK dengan alur approval bertingkat dari Guru → Wali Kelas → Guru BK
+            Sistem digital untuk memvalidasi ketuntasan mata pelajaran siswa SMKN 1 Bondowoso dengan alur approval bertingkat dari Guru → Wali Kelas → Guru BK
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
