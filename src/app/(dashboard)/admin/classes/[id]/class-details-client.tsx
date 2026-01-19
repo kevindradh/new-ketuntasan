@@ -34,8 +34,8 @@ import {
 } from "@/components/ui/popover"
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Plus, Trash2, ArrowLeft, Check, ChevronsUpDown, Loader2, X } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { Plus, Trash2, ArrowLeft, Check, ChevronsUpDown, Loader2, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { cn } from "@/lib/utils"
 import { addStudentToClass, removeStudentFromClass, bulkAddStudentsToClass } from '@/actions/admin'
@@ -45,9 +45,15 @@ interface ClassDetailsClientProps {
     classData: Class & { homeroom_teacher?: { full_name: string } }
     enrolledStudents: ({ id: string; student: Profile })[] // id is class_student id
     allStudents: Profile[]
+    metadata: {
+        currentPage: number
+        pageCount: number
+        totalItems: number
+        limit: number
+    }
 }
 
-export function ClassDetailsClient({ classData, enrolledStudents, allStudents }: ClassDetailsClientProps) {
+export function ClassDetailsClient({ classData, enrolledStudents, allStudents, metadata }: ClassDetailsClientProps) {
     const router = useRouter()
     const [open, setOpen] = useState(false) // For Add Student Dialog
     const [loading, setLoading] = useState(false)
@@ -95,6 +101,15 @@ export function ClassDetailsClient({ classData, enrolledStudents, allStudents }:
             toast.success('Siswa dikeluarkan dari kelas')
             router.refresh()
         }
+    }
+
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
+
+    const handlePageChange = (newPage: number) => {
+        const params = new URLSearchParams(searchParams)
+        params.set('page', String(newPage))
+        router.push(`${pathname}?${params.toString()}`)
     }
 
     return (
@@ -250,6 +265,50 @@ export function ClassDetailsClient({ classData, enrolledStudents, allStudents }:
                                 )}
                             </TableBody>
                         </Table>
+
+
+                        {/* Pagination Controls */}
+                        <div className="flex items-center justify-end space-x-2 mt-4">
+                            <Button
+                                variant="outline"
+                                className="h-8 w-8 p-0"
+                                onClick={() => handlePageChange(1)}
+                                disabled={metadata.currentPage === 1 || loading}
+                            >
+                                <span className="sr-only">Go to first page</span>
+                                <ChevronsLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="h-8 w-8 p-0"
+                                onClick={() => handlePageChange(metadata.currentPage - 1)}
+                                disabled={metadata.currentPage <= 1 || loading}
+                            >
+                                <span className="sr-only">Go to previous page</span>
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                                Page {metadata.currentPage} of {metadata.pageCount}
+                            </div>
+                            <Button
+                                variant="outline"
+                                className="h-8 w-8 p-0"
+                                onClick={() => handlePageChange(metadata.currentPage + 1)}
+                                disabled={metadata.currentPage >= metadata.pageCount || loading}
+                            >
+                                <span className="sr-only">Go to next page</span>
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="h-8 w-8 p-0"
+                                onClick={() => handlePageChange(metadata.pageCount)}
+                                disabled={metadata.currentPage >= metadata.pageCount || loading}
+                            >
+                                <span className="sr-only">Go to last page</span>
+                                <ChevronsRight className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
 

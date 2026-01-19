@@ -2,9 +2,21 @@ import { createClient } from '@/lib/supabase/server'
 import { ClassDetailsClient } from './class-details-client'
 import { notFound } from 'next/navigation'
 
-export default async function ClassDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ClassDetailsPage({
+    params,
+    searchParams
+}: {
+    params: Promise<{ id: string }>
+    searchParams: Promise<{ page?: string, query?: string }>
+}) {
     const supabase = await createClient()
     const { id } = await params
+    const { page } = await searchParams
+
+    const currentPage = Number(page) || 1
+    const limit = 10
+    const from = (currentPage - 1) * limit
+    const to = from + limit - 1
 
     // 1. Fetch Class Data
     const { data: classData, error } = await supabase
@@ -21,15 +33,16 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
         notFound()
     }
 
-    // 2. Fetch Enrolled Students
-    const { data: enrolledData } = await supabase
+    // 2. Fetch Enrolled Students with Pagination
+    const { data: enrolledData, count } = await supabase
         .from('class_students')
         .select(`
             id,
             student:profiles!class_students_student_id_fkey(*)
-        `)
+        `, { count: 'exact' })
         .eq('class_id', id)
         .order('created_at')
+        .range(from, to)
 
     // 3. Fetch All Available Students (Not in any class)
     // First, find all students who are already in ANY class
@@ -40,6 +53,8 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
     const alreadyEnrolledIds = new Set(alreadyEnrolled?.map(e => e.student_id))
 
     // Fetch all students with role 'STUDENT'
+    // Limit this fetch for performance? For "Add Student" modal search, typically client-side search is OK if under 1000.
+    // If >1000, we need async search for the modal too. Assuming <1000 active students for now.
     const { data: studentRoles } = await supabase
         .from('user_roles')
         .select('user_id')
@@ -63,12 +78,21 @@ export default async function ClassDetailsPage({ params }: { params: Promise<{ i
         student: item.student
     }))
 
+    const totalItems = count || 0
+    const pageCount = Math.ceil(totalItems / limit)
+
     return (
         <ClassDetailsClient
             classData={classData}
             // @ts-ignore
             enrolledStudents={enrolledStudents}
             allStudents={allStudents || []}
+            metadata={{
+                currentPage,
+                pageCount,
+                totalItems,
+                limit
+            }}
         />
     )
 }
