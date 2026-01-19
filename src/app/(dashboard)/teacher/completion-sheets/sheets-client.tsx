@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,19 +24,25 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { ClipboardCheck, Search, Eye, Loader2, Users, ChevronLeft, ArrowRight, CheckCircle2, CheckSquare } from 'lucide-react'
+import { ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight, Search, Users, ClipboardCheck, ArrowRight, CheckCircle2, CheckSquare, Eye, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { toggleCompletionItem, bulkMarkComplete } from '@/actions/completion'
 import { formatDate } from '@/lib/utils'
 import type { CompletionSheet, CompletionItem, Subject } from '@/types/database'
+import { useDebounce } from '@/hooks/use-debounce'
+import { useEffect } from 'react'
+
+// Simplified interface for stats view
+interface StatsSheet {
+    class_id: string
+    completion_items: {
+        subject_id: string
+        is_completed: boolean
+    }[]
+}
 
 interface CompletionSheetsClientProps {
-    sheets: (CompletionSheet & {
-        student?: { id: string; full_name: string; nisn?: string }
-        exam?: { name: string; exam_type: string }
-        class?: { name: string }
-        completion_items?: (CompletionItem & { subject?: Subject })[]
-    })[]
+    teacherId: string
     assignments: {
         id: string
         class_id: string
@@ -43,22 +50,68 @@ interface CompletionSheetsClientProps {
         class?: { id: string; name: string }
         subject?: { id: string; name: string; code: string }
     }[]
-    teacherId: string
+    // View Mode Props
+    view: 'dashboard' | 'detail'
+    // Dashboard Props
+    statsSheets?: StatsSheet[]
+    // Detail Props
+    paginatedSheets?: (CompletionSheet & {
+        student?: { id: string; full_name: string; nisn?: string }
+        exam?: { name: string; exam_type: string }
+        class?: { name: string }
+        completion_items?: (CompletionItem & { subject?: Subject })[]
+    })[]
+    currentAssignment?: {
+        class_id: string
+        subject_id: string
+    }
+    metadata?: {
+        currentPage: number
+        pageCount: number
+        totalItems: number
+        limit: number
+    }
 }
 
-export function CompletionSheetsClient({ sheets, assignments, teacherId }: CompletionSheetsClientProps) {
-    const [searchQuery, setSearchQuery] = useState('')
-    const [selectedAssignment, setSelectedAssignment] = useState<typeof assignments[0] | null>(null)
+export function CompletionSheetsClient({
+    teacherId,
+    assignments,
+    view,
+    statsSheets = [],
+    paginatedSheets = [],
+    currentAssignment,
+    metadata
+}: CompletionSheetsClientProps) {
+    const router = useRouter()
+
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
+
+    // Search State
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('query') || '')
+    const debouncedSearch = useDebounce(searchTerm, 300)
+
+    useEffect(() => {
+        // Only update if value changed to prevent loops
+        const currentQuery = searchParams.get('query') || ''
+        if (debouncedSearch === currentQuery) return
+
+        const params = new URLSearchParams(searchParams)
+        if (debouncedSearch) {
+            params.set('query', debouncedSearch)
+        } else {
+            params.delete('query')
+        }
+        params.set('page', '1') // Reset to page 1
+        router.push(`${pathname}?${params.toString()}`)
+    }, [debouncedSearch, pathname, router, searchParams])
+
     const [selectedSheetId, setSelectedSheetId] = useState<string | null>(null)
     const [loading, setLoading] = useState<string | null>(null)
     const [notes, setNotes] = useState<Record<string, string>>({})
 
-    // Derived state for selected sheet to ensure it's always fresh
-    const selectedSheet = sheets.find(s => s.id === selectedSheetId) || null
-
-    // Pagination State
-    const [currentPage, setCurrentPage] = useState(1)
-    const itemsPerPage = 10
+    // Pagination (Client state for UI only, actual range is server-side)
+    // We use metadata from props for controls
 
     // Bulk Action State
     const [selectedItemIds, setSelectedItemIds] = useState<string[]>([])
@@ -66,22 +119,29 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
     const [bulkNotes, setBulkNotes] = useState<Record<string, string>>({})
     const [isBulkSubmitting, setIsBulkSubmitting] = useState(false)
 
-    // Filter sheets based on selection
-    const filteredSheets = sheets.filter(s => {
-        if (selectedAssignment && s.class_id !== selectedAssignment.class_id) return false
-        if (searchQuery) {
-            return s.student?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                s.student?.nisn?.includes(searchQuery)
-        }
-        return true
-    })
-
-    // Pagination Logic
-    const totalPages = Math.ceil(filteredSheets.length / itemsPerPage)
-    const paginatedSheets = filteredSheets.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
+    // Derived State
+    const activeStatsAssignment = assignments.find(a =>
+        a.class_id === currentAssignment?.class_id &&
+        a.subject_id === currentAssignment?.subject_id
     )
+
+    const handlePageChange = (newPage: number) => {
+        const params = new URLSearchParams(searchParams)
+        params.set('page', String(newPage))
+        router.push(`${pathname}?${params.toString()}`)
+    }
+
+    const handleAssignmentSelect = (assign: typeof assignments[0]) => {
+        const params = new URLSearchParams()
+        params.set('class_id', assign.class_id)
+        params.set('subject_id', assign.subject_id)
+        router.push(`${pathname}?${params.toString()}`)
+    }
+
+    // Identify selected sheet
+    const selectedSheet = paginatedSheets?.find(s => s.id === selectedSheetId) || null
+
+
 
     const handleToggle = async (itemId: string) => {
         setLoading(itemId)
@@ -97,8 +157,10 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
     }
 
     // --- Bulk Selection Logic ---
-    const getSubjectItem = (sheet: typeof sheets[0]) => {
-        return sheet.completion_items?.find(i => i.subject_id === selectedAssignment?.subject_id)
+    const getSubjectItem = (sheet: typeof paginatedSheets[0]) => {
+        // In detail view, we already filtered items by subject_id in server
+        // So the first item should be the correct one, or find match just in case
+        return sheet.completion_items?.find(i => i.subject_id === currentAssignment?.subject_id)
     }
 
     // Uncompleted sheets on CURRENT PAGE (for header checkbox which usually selects visible items)
@@ -148,8 +210,8 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
         }
     }
 
-    // VIEW 1: SELECTION GRID
-    if (!selectedAssignment) {
+    // VIEW 1: SELECTION GRID (Dashboard)
+    if (view === 'dashboard') {
         return (
             <div className="p-6 lg:p-8 space-y-6">
                 <div>
@@ -159,7 +221,8 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {assignments.map(assign => {
-                        const classSheets = sheets.filter(s => s.class_id === assign.class_id)
+                        // Calculate stats from statsSheets
+                        const classSheets = statsSheets.filter(s => s.class_id === assign.class_id)
                         const totalStudents = classSheets.length
                         const completedCount = classSheets.filter(s =>
                             s.completion_items?.some(i => i.subject_id === assign.subject_id && i.is_completed)
@@ -169,7 +232,7 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                             <Card
                                 key={assign.id}
                                 className="group hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer border-slate-200"
-                                onClick={() => setSelectedAssignment(assign)}
+                                onClick={() => handleAssignmentSelect(assign)}
                             >
                                 <CardHeader>
                                     <div className="flex justify-between items-start">
@@ -216,21 +279,17 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
         <div className="p-6 lg:p-8 space-y-6">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
+
                     <Button
                         variant="ghost"
                         className="pl-0 hover:pl-2 transition-all mb-1 text-slate-500 hover:text-slate-900"
-                        onClick={() => {
-                            setSelectedAssignment(null);
-                            setSelectedItemIds([]);
-                            setSearchQuery('');
-                            setCurrentPage(1);
-                        }}
+                        onClick={() => router.push(pathname)} // Clear params to go back
                     >
                         <ChevronLeft className="h-4 w-4 mr-1" />
                         Kembali ke Daftar Kelas
                     </Button>
                     <h1 className="text-2xl font-bold text-slate-900 line-clamp-1">
-                        {selectedAssignment.class?.name} - {selectedAssignment.subject?.name}
+                        {activeStatsAssignment?.class?.name} - {activeStatsAssignment?.subject?.name}
                     </h1>
                 </div>
 
@@ -245,11 +304,8 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
                             placeholder="Cari siswa..."
-                            value={searchQuery}
-                            onChange={(e) => {
-                                setSearchQuery(e.target.value)
-                                setCurrentPage(1) // Reset page on search
-                            }}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-9 w-64 lg:w-80"
                         />
                     </div>
@@ -268,7 +324,7 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                     </DialogHeader>
 
                     <div className="space-y-4 py-2">
-                        {filteredSheets
+                        {paginatedSheets
                             .filter(s => getSubjectItem(s) && selectedItemIds.includes(getSubjectItem(s)!.id))
                             .map(sheet => {
                                 const item = getSubjectItem(sheet)!
@@ -318,7 +374,7 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                         </div>
                         <div className="space-y-3">
                             {selectedSheet?.completion_items
-                                ?.filter(item => item.subject_id === selectedAssignment.subject_id)
+                                ?.filter(item => item.subject_id === currentAssignment?.subject_id)
                                 .map((item) => (
                                     <div key={item.id} className="p-4 border rounded-lg">
                                         <div className="flex items-start gap-4">
@@ -352,7 +408,7 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                                         </div>
                                     </div>
                                 ))}
-                            {selectedSheet?.completion_items?.filter(item => item.subject_id === selectedAssignment.subject_id).length === 0 && (
+                            {selectedSheet?.completion_items?.filter(item => item.subject_id === currentAssignment?.subject_id).length === 0 && (
                                 <p className="text-slate-500 italic text-center py-4">Item mapel tidak ditemukan di lembar ini.</p>
                             )}
                         </div>
@@ -392,7 +448,7 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                                 </TableRow>
                             ) : (
                                 paginatedSheets.map((sheet) => {
-                                    const subjectItem = sheet.completion_items?.find(i => i.subject_id === selectedAssignment.subject_id)
+                                    const subjectItem = sheet.completion_items?.find(i => i.subject_id === currentAssignment?.subject_id)
                                     const isCompleted = subjectItem?.is_completed
                                     const itemId = subjectItem?.id
 
@@ -445,29 +501,48 @@ export function CompletionSheetsClient({ sheets, assignments, teacherId }: Compl
                     </Table>
 
                     {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-between px-4 py-4 border-t">
-                            <div className="text-sm text-slate-500">
-                                Halaman {currentPage} dari {totalPages}
+                    {/* Pagination Context from DataTable style */}
+                    {metadata && (
+                        <div className="flex items-center justify-end space-x-2 py-4 px-4 border-t">
+                            <Button
+                                variant="outline"
+                                className="h-8 w-8 p-0"
+                                onClick={() => handlePageChange(1)}
+                                disabled={metadata.currentPage === 1}
+                            >
+                                <span className="sr-only">Go to first page</span>
+                                <ChevronsLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="h-8 w-8 p-0"
+                                onClick={() => handlePageChange(metadata.currentPage - 1)}
+                                disabled={metadata.currentPage === 1}
+                            >
+                                <span className="sr-only">Go to previous page</span>
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                                Page {metadata.currentPage} of {metadata.pageCount}
                             </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    disabled={currentPage === 1}
-                                >
-                                    Sebelumnya
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    Selanjutnya
-                                </Button>
-                            </div>
+                            <Button
+                                variant="outline"
+                                className="h-8 w-8 p-0"
+                                onClick={() => handlePageChange(metadata.currentPage + 1)}
+                                disabled={metadata.currentPage === metadata.pageCount}
+                            >
+                                <span className="sr-only">Go to next page</span>
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="h-8 w-8 p-0"
+                                onClick={() => handlePageChange(metadata.pageCount)}
+                                disabled={metadata.currentPage === metadata.pageCount}
+                            >
+                                <span className="sr-only">Go to last page</span>
+                                <ChevronsRight className="h-4 w-4" />
+                            </Button>
                         </div>
                     )}
                 </CardContent>
