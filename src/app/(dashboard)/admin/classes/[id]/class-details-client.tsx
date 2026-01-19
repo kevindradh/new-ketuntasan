@@ -34,11 +34,11 @@ import {
 } from "@/components/ui/popover"
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Plus, Trash2, ArrowLeft, Check, ChevronsUpDown, Loader2 } from 'lucide-react'
+import { Plus, Trash2, ArrowLeft, Check, ChevronsUpDown, Loader2, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { cn } from "@/lib/utils"
-import { addStudentToClass, removeStudentFromClass } from '@/actions/admin'
+import { addStudentToClass, removeStudentFromClass, bulkAddStudentsToClass } from '@/actions/admin'
 import type { Class, Profile } from '@/types/database'
 
 interface ClassDetailsClientProps {
@@ -54,28 +54,29 @@ export function ClassDetailsClient({ classData, enrolledStudents, allStudents }:
 
     // Combobox state
     const [comboboxOpen, setComboboxOpen] = useState(false)
-    const [selectedStudentId, setSelectedStudentId] = useState("")
+    const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([])
 
     // Filter available students (not already enrolled)
     const enrolledStudentIds = new Set(enrolledStudents.map(e => e.student.id))
     const availableStudents = allStudents.filter(s => !enrolledStudentIds.has(s.id))
 
     const handleAddStudent = async () => {
-        if (!selectedStudentId) return
+        if (selectedStudentIds.length === 0) return
         setLoading(true)
 
-        const formData = new FormData()
-        formData.append('class_id', classData.id)
-        formData.append('student_id', selectedStudentId)
-
         try {
-            const result = await addStudentToClass(formData)
+            const result = await bulkAddStudentsToClass(classData.id, selectedStudentIds)
+
             if (result.error) {
                 toast.error(result.error)
             } else {
-                toast.success('Siswa berhasil ditambahkan ke kelas')
+                if (result.message) {
+                    toast.success(result.message)
+                } else {
+                    toast.success('Siswa berhasil ditambahkan ke kelas')
+                }
                 setOpen(false)
-                setSelectedStudentId("")
+                setSelectedStudentIds([])
             }
         } catch {
             toast.error('Terjadi kesalahan')
@@ -135,58 +136,77 @@ export function ClassDetailsClient({ classData, enrolledStudents, allStudents }:
                                     </DialogDescription>
                                 </DialogHeader>
                                 <div className="py-4">
-                                    <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
-                                        <PopoverTrigger asChild>
-                                            <Button
-                                                variant="outline"
-                                                role="combobox"
-                                                aria-expanded={comboboxOpen}
-                                                className="w-full justify-between"
-                                            >
-                                                {selectedStudentId
-                                                    ? availableStudents.find((student) => student.id === selectedStudentId)?.full_name
-                                                    : "Pilih siswa..."}
-                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-[400px] p-0">
-                                            <Command>
-                                                <CommandInput placeholder="Cari siswa..." />
+                                    <div className="space-y-4 py-4">
+                                        {/* Selected Students Area */}
+                                        <div className="space-y-2">
+                                            <div className="text-sm font-medium text-muted-foreground">
+                                                Siswa dipilih ({selectedStudentIds.length})
+                                            </div>
+                                            <div className="flex flex-wrap gap-2 min-h-[40px] p-3 border rounded-md bg-slate-50">
+                                                {selectedStudentIds.length === 0 && (
+                                                    <span className="text-sm text-muted-foreground italic">Belum ada siswa dipilih</span>
+                                                )}
+                                                {selectedStudentIds.map(id => {
+                                                    const student = allStudents.find(s => s.id === id)
+                                                    if (!student) return null
+                                                    return (
+                                                        <Badge key={id} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-1 bg-white border shadow-sm hover:bg-slate-100">
+                                                            {student.full_name}
+                                                            <button
+                                                                onClick={() => setSelectedStudentIds(prev => prev.filter(mid => mid !== id))}
+                                                                className="ml-1 rounded-full p-0.5 hover:bg-slate-200 text-slate-500 hover:text-red-500 transition-colors"
+                                                            >
+                                                                <del className="sr-only">Hapus</del>
+                                                                <X className="h-3 w-3" />
+                                                            </button>
+                                                        </Badge>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* Search & Select Area */}
+                                        <div className="border rounded-md overflow-hidden">
+                                            <Command className="h-[250px]">
+                                                <CommandInput placeholder="Cari nama siswa atau NISN..." />
                                                 <CommandList>
                                                     <CommandEmpty>Siswa tidak ditemukan.</CommandEmpty>
-                                                    <CommandGroup>
-                                                        {availableStudents.slice(0, 50).map((student) => (
-                                                            <CommandItem
-                                                                key={student.id}
-                                                                value={student.full_name}
-                                                                onSelect={() => {
-                                                                    setSelectedStudentId(student.id)
-                                                                    setComboboxOpen(false)
-                                                                }}
-                                                            >
-                                                                <Check
-                                                                    className={cn(
-                                                                        "mr-2 h-4 w-4",
-                                                                        selectedStudentId === student.id ? "opacity-100" : "opacity-0"
-                                                                    )}
-                                                                />
-                                                                <div className="flex flex-col">
-                                                                    <span>{student.full_name}</span>
-                                                                    <span className="text-xs text-muted-foreground">{student.nisn}</span>
-                                                                </div>
-                                                            </CommandItem>
-                                                        ))}
+                                                    <CommandGroup heading="Daftar Siswa">
+                                                        {availableStudents
+                                                            .filter(s => !selectedStudentIds.includes(s.id))
+                                                            .map((student) => (
+                                                                <CommandItem
+                                                                    key={student.id}
+                                                                    value={student.full_name + " " + student.nisn}
+                                                                    onSelect={() => {
+                                                                        setSelectedStudentIds(prev => [...prev, student.id])
+                                                                    }}
+                                                                    className="cursor-pointer"
+                                                                >
+                                                                    <Check className="mr-2 h-4 w-4 opacity-0" />
+                                                                    <div className="flex flex-col">
+                                                                        <span>{student.full_name}</span>
+                                                                        {student.nisn && <span className="text-xs text-muted-foreground">NISN: {student.nisn}</span>}
+                                                                    </div>
+                                                                </CommandItem>
+                                                            ))}
                                                     </CommandGroup>
                                                 </CommandList>
                                             </Command>
-                                        </PopoverContent>
-                                    </Popover>
+                                        </div>
+                                    </div>
+
+                                    {selectedStudentIds.length > 0 && (
+                                        <div className="mt-2 text-sm text-muted-foreground">
+                                            {selectedStudentIds.length} siswa akan ditambahkan.
+                                        </div>
+                                    )}
                                 </div>
                                 <DialogFooter>
                                     <Button variant="outline" onClick={() => setOpen(false)}>Batal</Button>
-                                    <Button onClick={handleAddStudent} disabled={!selectedStudentId || loading} className="gradient-primary border-0">
+                                    <Button onClick={handleAddStudent} disabled={selectedStudentIds.length === 0 || loading} className="gradient-primary border-0">
                                         {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                                        Tambahkan
+                                        Tambahkan ({selectedStudentIds.length})
                                     </Button>
                                 </DialogFooter>
                             </DialogContent>

@@ -279,6 +279,58 @@ export async function addStudentToClass(formData: FormData) {
     return { success: true }
 }
 
+export async function bulkAddStudentsToClass(classId: string, studentIds: string[]) {
+    // const supabase = await createClient() -> Switch to Admin for RLS bypass
+    const supabaseAdmin = createAdminClient()
+
+    if (!studentIds || studentIds.length === 0) {
+        return { error: 'Tidak ada siswa yang dipilih' }
+    }
+
+    // 1. Check valid students & existing enrollments
+    // Ideally we should check if they are already enrolled in *another* class if that rule is strict.
+    // However, for bulk add, let's assume the UI filters them well, but we can do a quick check.
+    // For performance, we might skip detailed per-student checks or do a single query.
+
+    const { data: existingEnrollments } = await supabaseAdmin
+        .from('class_students')
+        .select('student_id')
+        .in('student_id', studentIds)
+
+    // We strictly want to prevent students who are already in a class (any class)
+    // If the requirement is unique class per student:
+    const alreadyEnrolledIds = new Set(existingEnrollments?.map(e => e.student_id))
+    const validStudentIds = studentIds.filter(id => !alreadyEnrolledIds.has(id))
+
+    if (validStudentIds.length === 0) {
+        return { error: 'Semua siswa yang dipilih sudah terdaftar di kelas lain (atau kelas ini)' }
+    }
+
+    // 2. Bulk Insert
+    const rowsToInsert = validStudentIds.map(studentId => ({
+        class_id: classId,
+        student_id: studentId,
+    }))
+
+    const { error } = await supabaseAdmin.from('class_students').insert(rowsToInsert)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/classes')
+    revalidatePath(`/admin/classes/${classId}`)
+
+    // Return explicit success with info on how many were added vs skipped
+    const skippedCount = studentIds.length - validStudentIds.length
+    if (skippedCount > 0) {
+        return {
+            success: true,
+            message: `Berhasil menambahkan ${validStudentIds.length} siswa. ${skippedCount} siswa dilewati karena sudah punya kelas.`
+        }
+    }
+
+    return { success: true }
+}
+
 export async function removeStudentFromClass(id: string) {
     // const supabase = await createClient() -> Switch to Admin for RLS bypass
     const supabaseAdmin = createAdminClient()
