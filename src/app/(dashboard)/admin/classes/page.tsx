@@ -4,7 +4,7 @@ import { ClassesClient } from './classes-client'
 export default async function ClassesPage({
     searchParams,
 }: {
-    searchParams: Promise<{ page?: string, query?: string }>
+    searchParams: Promise<{ page?: string, query?: string, grade?: string }>
 }) {
     const supabase = await createClient()
 
@@ -12,6 +12,7 @@ export default async function ClassesPage({
     const params = await searchParams
     const currentPage = Number(params?.page) || 1
     const query = params?.query || ''
+    const grade = params?.grade || 'all'
     const pageSize = 10
 
     // Fetch teachers for dropdown
@@ -48,7 +49,11 @@ export default async function ClassesPage({
         homeroom_teacher:profiles!classes_homeroom_teacher_id_fkey(id, full_name),
         counselor:profiles!classes_counselor_id_fkey(id, full_name),
         class_students(count)
-      `, { count: 'exact' })
+        `, { count: 'exact' })
+
+    if (grade !== 'all') {
+        dbQuery = dbQuery.eq('grade_level', grade)
+    }
 
     if (query) {
         dbQuery = dbQuery.or(`name.ilike.%${query}%,major.ilike.%${query}%`)

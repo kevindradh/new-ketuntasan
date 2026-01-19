@@ -28,6 +28,7 @@ import type { Class } from '@/types/database'
 import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from "@tanstack/react-table"
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface ClassesClientProps {
     items: (Class & { homeroom_teacher?: { id: string; full_name: string }; counselor?: { id: string; full_name: string }; class_students?: { count: number }[] })[]
@@ -42,6 +43,9 @@ export function ClassesClient({ items, teachers, counselors, pageCount, currentP
     const [open, setOpen] = useState(false)
     const [editingClass, setEditingClass] = useState<Class | null>(null)
     const [loading, setLoading] = useState(false)
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    const currentGrade = searchParams.get('grade') || 'all'
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -285,7 +289,31 @@ export function ClassesClient({ items, teachers, counselors, pageCount, currentP
                 currentPage={currentPage}
                 totalItems={totalItems}
                 searchPlaceholder="Cari kelas atau jurusan..."
-            />
+            >
+                <Select
+                    value={currentGrade}
+                    onValueChange={(value) => {
+                        const params = new URLSearchParams(searchParams.toString())
+                        if (value === 'all') {
+                            params.delete('grade')
+                        } else {
+                            params.set('grade', value)
+                        }
+                        params.set('page', '1') // Reset pagination
+                        router.push(`?${params.toString()}`)
+                    }}
+                >
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter Tingkat" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Semua Tingkat</SelectItem>
+                        <SelectItem value="10">Kelas 10</SelectItem>
+                        <SelectItem value="11">Kelas 11</SelectItem>
+                        <SelectItem value="12">Kelas 12</SelectItem>
+                    </SelectContent>
+                </Select>
+            </DataTable>
         </div>
     )
 }
