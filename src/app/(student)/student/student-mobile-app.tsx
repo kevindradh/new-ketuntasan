@@ -83,7 +83,7 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
             doc.text('LEMBAR KETUNTASAN SISWA', 105, 20, { align: 'center' })
             doc.setFontSize(12)
             doc.setFont('helvetica', 'normal')
-            doc.text('Sistem Ketuntasan Mata Pelajaran SMK', 105, 28, { align: 'center' })
+            doc.text('Sistem Ketuntasan Mata Pelajaran SMKN 1 Bondowoso', 105, 28, { align: 'center' })
 
             doc.setLineWidth(0.5)
             doc.line(20, 35, 190, 35)
@@ -140,7 +140,7 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
             // Footer
             doc.setFontSize(9)
             doc.setTextColor(128)
-            doc.text('Dokumen ini dihasilkan secara digital oleh Sistem Si-Tuntas', 105, 285, { align: 'center' })
+            doc.text('Dokumen ini dihasilkan secara digital oleh Sistem e-Tuntas', 105, 285, { align: 'center' })
 
             // Save
             const safeName = (profile?.full_name || 'Siswa').replace(/[^a-zA-Z0-9]/g, '_')

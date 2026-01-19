@@ -87,7 +87,7 @@ export default function LoginPage() {
                     </div>
                 </div>
                 <CardTitle className="text-2xl font-bold">Selamat Datang</CardTitle>
-                <CardDescription>Masuk ke akun Si-Tuntas Anda</CardDescription>
+                <CardDescription>Masuk ke akun e-Tuntas Anda</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -154,7 +154,7 @@ export default function LoginPage() {
                 </div>
             </CardContent>
             <div className="text-center text-sm text-slate-600">
-                Sistem Tertutup &copy; 2026 Si-Tuntas
+                Sistem Tertutup &copy; 2026 e-Tuntas
             </div>
         </Card>
     )

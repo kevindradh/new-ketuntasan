@@ -22,7 +22,7 @@ export default function Home() {
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Si-Tuntas
+              e-Tuntas
             </span>
           </div>
           <div className="flex items-center gap-4">
@@ -201,7 +201,7 @@ export default function Home() {
               Siap Digitalisasi Proses Ketuntasan?
             </h2>
             <p className="text-lg text-blue-100 mb-8">
-              Mulai gunakan Si-Tuntas untuk sekolah Anda sekarang juga
+              Mulai gunakan e-Tuntas untuk sekolah Anda sekarang juga
             </p>
             <Link href="/login">
               <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8 py-6 font-medium shadow-lg">
@@ -221,14 +221,14 @@ export default function Home() {
               <div className="p-2 rounded-xl bg-blue-600">
                 <GraduationCap className="h-5 w-5 text-white" />
               </div>
-              <span className="text-lg font-bold text-white">Si-Tuntas</span>
+              <span className="text-lg font-bold text-white">e-Tuntas</span>
             </div>
             <p className="text-sm">
-              © 2026 Si-Tuntas. Sistem Ketuntasan Mata Pelajaran SMK.
+              © 2026 e-Tuntas. Sistem Ketuntasan Mata Pelajaran SMKN 1 Bondowoso.
             </p>
           </div>
         </div>
       </footer>
-    </div>
+    </div >
   );
 }

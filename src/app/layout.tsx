@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Si-Tuntas | Sistem Ketuntasan Mata Pelajaran",
-  description: "Sistem digital untuk mengelola dan memvalidasi ketuntasan mata pelajaran siswa SMK",
+  title: "e-Tuntas SMKN 1 Bondowoso",
+  description: "Sistem Ketuntasan Mata Pelajaran SMKN 1 Bondowoso",
 };
 
 export default function RootLayout({

@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
 const demoUsers = [
-    { email: 'admin@situntas.com', name: 'Admin Si-Tuntas', role: 'ADMIN' },
+    { email: 'admin@situntas.com', name: 'Admin e-Tuntas', role: 'ADMIN' },
     { email: 'guru.matematika@situntas.com', name: 'Budi Santoso', role: 'TEACHER' },
     { email: 'guru.bahasa@situntas.com', name: 'Siti Rahayu', role: 'TEACHER' },
     { email: 'guru.rpl@situntas.com', name: 'Ahmad Wijaya', role: 'TEACHER' },
@@ -96,7 +96,7 @@ export default function SetupPage() {
             <div className="max-w-3xl mx-auto space-y-6">
                 <div className="text-center text-white">
                     <GraduationCap className="h-16 w-16 mx-auto mb-4" />
-                    <h1 className="text-3xl font-bold">Setup Demo Si-Tuntas</h1>
+                    <h1 className="text-3xl font-bold">Setup Demo e-Tuntas</h1>
                     <p className="text-blue-200 mt-2">Buat akun demo untuk testing aplikasi</p>
                 </div>
 

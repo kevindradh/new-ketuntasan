@@ -185,10 +185,10 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    Si-Tuntas
+                    e-Tuntas
                   </span>
                   <span className="truncate text-xs text-muted-foreground">
-                    Sistem Ketuntasan
+                    SMKN 1 Bondowoso
                   </span>
                 </div>
               </Link>

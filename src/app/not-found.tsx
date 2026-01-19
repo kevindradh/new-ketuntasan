@@ -40,7 +40,7 @@ export default function NotFound() {
 
                 {/* Footer/Copyright */}
                 <div className="pt-8 text-xs text-slate-400">
-                    &copy; {new Date().getFullYear()} Si-Tuntas System
+                    &copy; {new Date().getFullYear()} e-Tuntas SMKN 1 Bondowoso
                 </div>
             </div>
         </div>
