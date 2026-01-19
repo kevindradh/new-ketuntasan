@@ -13,9 +13,9 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog'
-import { Plus, Loader2 } from 'lucide-react'
+import { Plus, Loader2, KeyRound } from 'lucide-react'
 import { toast } from 'sonner'
-import { updateStudent, deleteStudent, createStudent } from '@/actions/admin'
+import { updateStudent, deleteStudent, createStudent, resetUserPassword } from '@/actions/admin'
 import type { Profile } from '@/types/database'
 import { DataTable } from '@/components/ui/data-table'
 import { getColumns } from './columns'
@@ -38,6 +38,8 @@ export function StudentsClient({
 }: StudentsClientProps) {
     const [open, setOpen] = useState(false)
     const [editingStudent, setEditingStudent] = useState<Profile | null>(null)
+    const [resetPasswordOpen, setResetPasswordOpen] = useState(false)
+    const [selectedStudentForReset, setSelectedStudentForReset] = useState<Profile | null>(null)
     const [loading, setLoading] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -68,6 +70,32 @@ export function StudentsClient({
         }
     }
 
+    const handlePasswordReset = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        if (!selectedStudentForReset) return
+
+        setLoading(true)
+        const formData = new FormData(e.currentTarget)
+        const newPassword = formData.get('password') as string
+
+        if (!newPassword || newPassword.length < 6) {
+            toast.error('Password minimal 6 karakter')
+            setLoading(false)
+            return
+        }
+
+        const result = await resetUserPassword(selectedStudentForReset.id, newPassword)
+
+        setLoading(false)
+        if (result.error) {
+            toast.error(result.error)
+        } else {
+            toast.success('Password siswa berhasil direset')
+            setResetPasswordOpen(false)
+            setSelectedStudentForReset(null)
+        }
+    }
+
     const handleDelete = async (id: string) => {
         if (!confirm('Yakin ingin menghapus data siswa ini?')) return
 
@@ -84,7 +112,11 @@ export function StudentsClient({
             setEditingStudent(student)
             setOpen(true)
         },
-        onDelete: handleDelete
+        onDelete: handleDelete,
+        onResetPassword: (student) => {
+            setSelectedStudentForReset(student)
+            setResetPasswordOpen(true)
+        }
     }), [])
 
     return (
@@ -159,6 +191,44 @@ export function StudentsClient({
                                     <Button type="submit" className="gradient-primary border-0" disabled={loading}>
                                         {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                                         Simpan
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={resetPasswordOpen} onOpenChange={(v) => { setResetPasswordOpen(v); if (!v) setSelectedStudentForReset(null) }}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Reset Password Siswa</DialogTitle>
+                                <DialogDescription>
+                                    Set password baru untuk <strong>{selectedStudentForReset?.full_name}</strong>.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handlePasswordReset} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="password">Password Baru</Label>
+                                    <div className="relative">
+                                        <Input
+                                            id="password"
+                                            name="password"
+                                            type="text"
+                                            required
+                                            minLength={6}
+                                            placeholder="Masukkan password baru"
+                                            className="pr-10"
+                                        />
+                                        <KeyRound className="absolute right-3 top-2.5 h-4 w-4 text-slate-400" />
+                                    </div>
+                                    <p className="text-xs text-slate-500">Minimal 6 karakter.</p>
+                                </div>
+                                <DialogFooter>
+                                    <Button type="button" variant="outline" onClick={() => setResetPasswordOpen(false)}>
+                                        Batal
+                                    </Button>
+                                    <Button type="submit" className="gradient-primary border-0" disabled={loading}>
+                                        {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                        Reset Password
                                     </Button>
                                 </DialogFooter>
                             </form>

@@ -499,3 +499,16 @@ export async function deleteStudent(id: string) {
     revalidatePath('/admin/students')
     return { success: true }
 }
+
+// ========== PASSWORD RESET ==========
+export async function resetUserPassword(userId: string, newPassword: string) {
+    const supabaseAdmin = createAdminClient()
+
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+        password: newPassword
+    })
+
+    if (error) return { error: error.message }
+
+    return { success: true }
+}

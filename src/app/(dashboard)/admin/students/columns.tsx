@@ -3,14 +3,15 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Profile } from "@/types/database"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2 } from "lucide-react"
+import { Pencil, Trash2, KeyRound } from "lucide-react"
 
 interface ColumnsProps {
     onEdit: (student: Profile) => void
     onDelete: (id: string) => void
+    onResetPassword: (student: Profile) => void
 }
 
-export const getColumns = ({ onEdit, onDelete }: ColumnsProps): ColumnDef<Profile>[] => [
+export const getColumns = ({ onEdit, onDelete, onResetPassword }: ColumnsProps): ColumnDef<Profile>[] => [
     {
         accessorKey: "nisn",
         header: "NISN",
@@ -43,6 +44,14 @@ export const getColumns = ({ onEdit, onDelete }: ColumnsProps): ColumnDef<Profil
                         onClick={() => onEdit(student)}
                     >
                         <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                        onClick={() => onResetPassword(student)}
+                    >
+                        <KeyRound className="h-4 w-4" />
                     </Button>
                     <Button
                         variant="ghost"
