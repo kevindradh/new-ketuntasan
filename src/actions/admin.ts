@@ -390,6 +390,7 @@ export async function createStudent(formData: FormData) {
     const fullName = formData.get('full_name') as string
     const nisn = formData.get('nisn') as string
     const phone = formData.get('phone') as string
+    const status = (formData.get('status') as string) || 'ACTIVE'
 
     // Default password for new students (in a real app, use email invite or random password)
     const password = "siswa" + (nisn || "12345")
@@ -409,14 +410,7 @@ export async function createStudent(formData: FormData) {
 
     const userId = userData.user.id
 
-    // 2. Insert into Profiles (if trigger doesn't handle it or to ensure data)
-    // Note: If you have a trigger on auth.users -> profiles, this might fail with duplicate key.
-    // We should safely upsert or checking if trigger exists.
-    // Assuming standard starter kit trigger: it usually inserts id, raw_user_meta_data info.
-    // Let's try to update the profile with specific fields that might not be in metadata (like nisn, phone)
-
-    // Wait for a moment for trigger? Or just update.
-    // Better: Update the profile that should exist (or insert if not).
+    // 2. Insert into Profiles
     const { error: profileError } = await supabaseAdmin
         .from('profiles')
         .upsert({
@@ -425,12 +419,11 @@ export async function createStudent(formData: FormData) {
             email: email,
             nisn: nisn || null,
             phone: phone || null,
+            status: status,
             updated_at: new Date().toISOString(),
         })
 
     if (profileError) {
-        // Rollback auth user if profile fails? 
-        // Ideally yes, but for now we just return error.
         await supabaseAdmin.auth.admin.deleteUser(userId)
         return { error: `Gagal membuat profil: ${profileError.message}` }
     }
@@ -450,7 +443,6 @@ export async function createStudent(formData: FormData) {
     // 4. Enroll in Class (Optional)
     const classId = formData.get('class_id') as string
     if (classId) {
-        // We reuse the logic but do direct insert since we have admin client here and know it's a new student (no existing enrollment)
         const { error: enrollError } = await supabaseAdmin
             .from('class_students')
             .insert({
@@ -459,10 +451,7 @@ export async function createStudent(formData: FormData) {
             })
 
         if (enrollError) {
-            // Should we fail the whole creation? Maybe just log/return warning?
-            // For now, let's treat it as non-fatal but impactful.
             console.error("Failed to auto-enroll student:", enrollError)
-            // We return success but maybe could include a warning note if our return type supported it.
         }
     }
 
@@ -479,7 +468,22 @@ export async function updateStudent(id: string, formData: FormData) {
         full_name: formData.get('full_name') as string,
         nisn: formData.get('nisn') as string,
         phone: formData.get('phone') as string || null,
+        status: formData.get('status') as string,
     }).eq('id', id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/students')
+    return { success: true }
+}
+
+export async function bulkUpdateStudentStatus(studentIds: string[], status: string) {
+    const supabaseAdmin = createAdminClient()
+
+    const { error } = await supabaseAdmin
+        .from('profiles')
+        .update({ status: status })
+        .in('id', studentIds)
 
     if (error) return { error: error.message }
 

@@ -2,6 +2,8 @@ export type UserRole = 'ADMIN' | 'TEACHER' | 'HOMEROOM' | 'COUNSELOR' | 'STUDENT
 
 export type CompletionStatus = 'PENDING' | 'IN_PROGRESS' | 'HOMEROOM_REVIEW' | 'COUNSELOR_REVIEW' | 'APPROVED' | 'REJECTED'
 
+export type StudentStatus = 'ACTIVE' | 'GRADUATED' | 'MOVED' | 'DROPPED_OUT'
+
 export interface Profile {
     id: string
     full_name: string
@@ -10,6 +12,7 @@ export interface Profile {
     email: string
     phone?: string
     avatar_url?: string
+    status?: StudentStatus // Default 'ACTIVE'
     created_at: string
     updated_at: string
 }

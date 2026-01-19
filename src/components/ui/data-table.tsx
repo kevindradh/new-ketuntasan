@@ -39,6 +39,9 @@ interface DataTableProps<TData, TValue> {
     searchable?: boolean
     searchPlaceholder?: string
     children?: React.ReactNode
+    rowSelection?: Record<string, boolean>
+    setRowSelection?: (rowSelection: Record<string, boolean>) => void
+    enableRowSelection?: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -50,6 +53,9 @@ export function DataTable<TData, TValue>({
     searchable = true,
     searchPlaceholder = "Cari...",
     children,
+    rowSelection,
+    setRowSelection,
+    enableRowSelection = false,
 }: DataTableProps<TData, TValue>) {
     const router = useRouter()
     const pathname = usePathname()
@@ -112,7 +118,20 @@ export function DataTable<TData, TValue>({
                 pageIndex: currentPage - 1,
                 pageSize: 10, // Default page size
             },
+            rowSelection: rowSelection || {},
         },
+        enableRowSelection: enableRowSelection,
+        onRowSelectionChange: (updaterOrValue) => {
+            if (setRowSelection) {
+                // Check if it's a function updater
+                if (typeof updaterOrValue === 'function') {
+                    setRowSelection(updaterOrValue(rowSelection || {}))
+                } else {
+                    setRowSelection(updaterOrValue)
+                }
+            }
+        },
+        getRowId: (row: any) => row.id, // Use ID as key for selection
         manualPagination: true,
         getCoreRowModel: getCoreRowModel(),
     })

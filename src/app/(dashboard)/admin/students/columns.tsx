@@ -11,7 +11,38 @@ interface ColumnsProps {
     onResetPassword: (student: Profile) => void
 }
 
+import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
+
+interface ColumnsProps {
+    onEdit: (student: Profile) => void
+    onDelete: (id: string) => void
+    onResetPassword: (student: Profile) => void
+}
+
 export const getColumns = ({ onEdit, onDelete, onResetPassword }: ColumnsProps): ColumnDef<Profile>[] => [
+    {
+        id: "select",
+        header: ({ table }) => (
+            <Checkbox
+                checked={
+                    table.getIsAllPageRowsSelected() ||
+                    (table.getIsSomePageRowsSelected() && "indeterminate")
+                }
+                onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                aria-label="Select all"
+            />
+        ),
+        cell: ({ row }) => (
+            <Checkbox
+                checked={row.getIsSelected()}
+                onCheckedChange={(value) => row.toggleSelected(!!value)}
+                aria-label="Select row"
+            />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+    },
     {
         accessorKey: "nisn",
         header: "NISN",
@@ -31,6 +62,26 @@ export const getColumns = ({ onEdit, onDelete, onResetPassword }: ColumnsProps):
         accessorKey: "phone",
         header: "No. HP",
         cell: ({ row }) => <div>{row.getValue("phone") || '-'}</div>,
+    },
+    {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => {
+            const status = row.getValue("status") as string || 'ACTIVE'
+            const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+                ACTIVE: "default",
+                GRADUATED: "secondary",
+                MOVED: "outline",
+                DROPPED_OUT: "destructive"
+            }
+            const labels: Record<string, string> = {
+                ACTIVE: "Aktif",
+                GRADUATED: "Lulus",
+                MOVED: "Pindah",
+                DROPPED_OUT: "Keluar"
+            }
+            return <Badge variant={variants[status] || "default"}>{labels[status] || status}</Badge>
+        },
     },
     {
         id: "actions",

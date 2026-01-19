@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,13 +13,29 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog'
-import { Plus, Loader2, KeyRound } from 'lucide-react'
+import { Plus, Loader2, KeyRound, Filter, ChevronDown, CheckCircle2, XCircle, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { updateStudent, deleteStudent, createStudent, resetUserPassword } from '@/actions/admin'
+import { updateStudent, deleteStudent, createStudent, resetUserPassword, bulkUpdateStudentStatus } from '@/actions/admin'
 import type { Profile } from '@/types/database'
 import { DataTable } from '@/components/ui/data-table'
 import { getColumns } from './columns'
 import { StudentImportWizard } from './import-wizard'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface StudentsClientProps {
     items: Profile[]
@@ -36,11 +52,52 @@ export function StudentsClient({
     currentPage,
     totalItems
 }: StudentsClientProps) {
+    const router = useRouter()
+    const searchParams = useSearchParams()
     const [open, setOpen] = useState(false)
     const [editingStudent, setEditingStudent] = useState<Profile | null>(null)
     const [resetPasswordOpen, setResetPasswordOpen] = useState(false)
     const [selectedStudentForReset, setSelectedStudentForReset] = useState<Profile | null>(null)
     const [loading, setLoading] = useState(false)
+    const [rowSelection, setRowSelection] = useState({})
+    const [isPending, startTransition] = useTransition()
+
+    const currentStatus = searchParams.get('status') || 'ACTIVE'
+
+    const selectedIds = useMemo(() => Object.keys(rowSelection), [rowSelection])
+
+    const handleStatusFilter = (value: string) => {
+        const params = new URLSearchParams(searchParams)
+        if (value) {
+            params.set('status', value)
+        } else {
+            params.delete('status')
+        }
+        params.set('page', '1') // Reset to page 1
+        startTransition(() => {
+            router.push(`?${params.toString()}`)
+        })
+    }
+
+    const handleBulkUpdate = async (status: string) => {
+        if (!selectedIds.length) return
+        if (!confirm(`Yakin ingin mengubah status ${selectedIds.length} siswa menjadi ${status}?`)) return
+
+        setLoading(true)
+        try {
+            const result = await bulkUpdateStudentStatus(selectedIds, status)
+            if (result.error) {
+                toast.error(result.error)
+            } else {
+                toast.success(`${selectedIds.length} siswa berhasil diperbarui`)
+                setRowSelection({})
+            }
+        } catch {
+            toast.error('Gagal melakukan bulk update')
+        } finally {
+            setLoading(false)
+        }
+    }
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -131,11 +188,55 @@ export function StudentsClient({
                     <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Data Siswa</h1>
                     <p className="text-slate-500 mt-1">Kelola data siswa terdaftar</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 items-center">
+                    {/* Status Filter */}
+                    <Select value={currentStatus} onValueChange={handleStatusFilter}>
+                        <SelectTrigger className="w-[180px] h-9 bg-white">
+                            <Filter className="w-4 h-4 mr-2" />
+                            <SelectValue placeholder="Filter Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ACTIVE">Siswa Aktif</SelectItem>
+                            <SelectItem value="GRADUATED">Lulus (Alumni)</SelectItem>
+                            <SelectItem value="MOVED">Pindah</SelectItem>
+                            <SelectItem value="DROPPED_OUT">Keluar (DO)</SelectItem>
+                            <SelectItem value="ALL">Semua Data</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    {/* Bulk Actions */}
+                    {selectedIds.length > 0 && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="h-9 border-dashed border-slate-300 text-slate-600">
+                                    {selectedIds.length} Terpilih
+                                    <ChevronDown className="ml-2 h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Aksi Massal</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => handleBulkUpdate('GRADUATED')}>
+                                    <CheckCircle2 className="mr-2 h-4 w-4 text-slate-500" />
+                                    Set Lulus
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleBulkUpdate('ACTIVE')}>
+                                    <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
+                                    Set Aktif
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => handleBulkUpdate('MOVED')}>
+                                    <XCircle className="mr-2 h-4 w-4" />
+                                    Set Pindah
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+
                     <StudentImportWizard classes={classes} />
                     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditingStudent(null) }}>
                         <DialogTrigger asChild>
-                            <Button className="gradient-primary border-0">
+                            <Button className="gradient-primary border-0 h-9">
                                 <Plus className="h-4 w-4 mr-2" />
                                 Tambah Siswa
                             </Button>
@@ -188,6 +289,20 @@ export function StudentsClient({
                                         className={editingStudent ? "bg-slate-100" : ""}
                                         placeholder="email@sekolah.sch.id"
                                     />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="status">Status</Label>
+                                    <Select name="status" defaultValue={editingStudent?.status || "ACTIVE"}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Pilih Status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="ACTIVE">Aktif</SelectItem>
+                                            <SelectItem value="GRADUATED">Lulus</SelectItem>
+                                            <SelectItem value="MOVED">Pindah</SelectItem>
+                                            <SelectItem value="DROPPED_OUT">Keluar</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <DialogFooter>
                                     <Button type="button" variant="outline" onClick={() => setOpen(false)}>
@@ -249,6 +364,9 @@ export function StudentsClient({
                 currentPage={currentPage}
                 totalItems={totalItems}
                 searchPlaceholder="Cari nama, NISN, atau email..."
+                rowSelection={rowSelection}
+                setRowSelection={setRowSelection}
+                enableRowSelection={true}
             />
         </div>
     )

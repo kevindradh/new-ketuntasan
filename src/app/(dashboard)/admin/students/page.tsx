@@ -5,6 +5,7 @@ interface SearchParams {
     page?: string
     per_page?: string
     query?: string
+    status?: string
 }
 
 export default async function StudentsPage({
@@ -16,6 +17,7 @@ export default async function StudentsPage({
     const page = Number(params.page) || 1
     const perPage = Number(params.per_page) || 10
     const query = params.query || ''
+    const status = params.status || 'ACTIVE'
 
     const supabase = await createClient()
 
@@ -31,6 +33,11 @@ export default async function StudentsPage({
         .from('profiles')
         .select('*, user_roles!inner(role)', { count: 'exact' })
         .eq('user_roles.role', 'STUDENT') as any
+
+    // Apply status filter
+    if (status !== 'ALL') {
+        queryBuilder = queryBuilder.eq('status', status)
+    }
 
     // Apply search filter if present
     if (query) {
