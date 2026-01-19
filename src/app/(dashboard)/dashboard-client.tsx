@@ -37,6 +37,7 @@ const pathLabels: Record<string, string> = {
     teachers: 'Pengajaran',
     'completion-sheets': 'Lembar Ketuntasan',
     approval: 'Approval',
+    assignments: 'Penugasan',
     settings: 'Pengaturan',
     notifications: 'Notifikasi',
 }
@@ -46,13 +47,16 @@ export function DashboardClient({ user, children }: DashboardClientProps) {
     const pathSegments = pathname.split('/').filter(Boolean)
 
     // Build breadcrumbs
-    const breadcrumbs = pathSegments.map((segment, index) => {
-        const href = '/' + pathSegments.slice(0, index + 1).join('/')
-        const label = pathLabels[segment] || segment.charAt(0).toUpperCase() + segment.slice(1)
-        const isLast = index === pathSegments.length - 1
+    const breadcrumbs = pathSegments
+        .map((segment, index) => {
+            const href = '/' + pathSegments.slice(0, index + 1).join('/')
+            const label = pathLabels[segment] || segment.charAt(0).toUpperCase() + segment.slice(1)
+            const isLast = index === pathSegments.length - 1
+            const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)
 
-        return { href, label, isLast }
-    })
+            return { href, label, isLast, isUuid }
+        })
+        .filter((crumb) => !crumb.isUuid)
 
     return (
         <SidebarProvider>

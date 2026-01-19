@@ -26,35 +26,39 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table'
 import { ArrowLeft, Plus, Trash2, BookOpen, GraduationCap, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { createTeacherAssignment, deleteTeacherAssignment } from '@/actions/admin' // Reuse existing actions
+import { useRouter, useSearchParams } from 'next/navigation'
+import { createTeacherAssignment, deleteTeacherAssignment } from '@/actions/admin'
 import type { Profile } from '@/types/database'
+import { DataTable } from '@/components/ui/data-table'
+import { ColumnDef } from "@tanstack/react-table"
 
 interface AssignmentsClientProps {
     teacher: Profile
     assignments: any[]
     subjects: { id: string, name: string, code: string }[]
     classes: { id: string, name: string, academic_year: string }[]
+    pageCount: number
+    currentPage: number
+    totalItems: number
 }
 
 export function AssignmentsClient({
     teacher,
     assignments,
     subjects,
-    classes
+    classes,
+    pageCount,
+    currentPage,
+    totalItems
 }: AssignmentsClientProps) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    const currentClassId = searchParams.get('classId') || 'all'
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -92,6 +96,50 @@ export function AssignmentsClient({
             toast.success('Penugasan dihapus')
         }
     }
+
+    const columns: ColumnDef<any>[] = [
+        {
+            accessorKey: "subject.name",
+            header: "Mata Pelajaran",
+            cell: ({ row }) => (
+                <div className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-slate-400" />
+                    <span className="font-medium">{row.original.subject.name}</span>
+                    <span className="text-xs text-slate-400">({row.original.subject.code})</span>
+                </div>
+            )
+        },
+        {
+            accessorKey: "class.name",
+            header: "Kelas",
+            cell: ({ row }) => (
+                <div className="flex items-center gap-2">
+                    <GraduationCap className="h-4 w-4 text-slate-400" />
+                    {row.original.class.name}
+                </div>
+            )
+        },
+        {
+            accessorKey: "academic_year",
+            header: "Tahun Ajar",
+            cell: ({ row }) => row.original.academic_year
+        },
+        {
+            id: "actions",
+            cell: ({ row }) => (
+                <div className="flex justify-end">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleDelete(row.original.id)}
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
+            )
+        }
+    ]
 
     return (
         <div className="p-6 lg:p-8 space-y-6">
@@ -169,62 +217,40 @@ export function AssignmentsClient({
                 </div>
             </div>
 
-            <Card className="border-slate-200 shadow-sm">
-                <CardHeader>
-                    <CardTitle>Daftar Kelas Ajar</CardTitle>
-                    <CardDescription>Mata pelajaran yang diampu oleh {teacher.full_name}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Mata Pelajaran</TableHead>
-                                <TableHead>Kelas</TableHead>
-                                <TableHead>Tahun Ajar</TableHead>
-                                <TableHead className="text-right">Aksi</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {assignments.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="text-center py-8 text-slate-500">
-                                        Belum ada penugasan aktif
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                assignments.map((item: any) => (
-                                    <TableRow key={item.id}>
-                                        <TableCell className="font-medium">
-                                            <div className="flex items-center gap-2">
-                                                <BookOpen className="h-4 w-4 text-slate-400" />
-                                                {item.subject.name}
-                                                <span className="text-xs text-slate-400">({item.subject.code})</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <GraduationCap className="h-4 w-4 text-slate-400" />
-                                                {item.class.name}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>{item.academic_year}</TableCell>
-                                        <TableCell className="text-right">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                onClick={() => handleDelete(item.id)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            <div className="space-y-4">
+                <DataTable
+                    columns={columns}
+                    data={assignments}
+                    pageCount={pageCount}
+                    currentPage={currentPage}
+                    totalItems={totalItems}
+                    searchPlaceholder="Cari penugasan..."
+                >
+                    <Select
+                        value={currentClassId}
+                        onValueChange={(value) => {
+                            const params = new URLSearchParams(searchParams.toString())
+                            if (value === 'all') {
+                                params.delete('classId')
+                            } else {
+                                params.set('classId', value)
+                            }
+                            params.set('page', '1') // Reset pagination
+                            router.push(`?${params.toString()}`)
+                        }}
+                    >
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Filter Kelas" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua Kelas</SelectItem>
+                            {classes.map(c => (
+                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </DataTable>
+            </div>
         </div>
     )
 }

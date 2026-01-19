@@ -38,6 +38,7 @@ interface DataTableProps<TData, TValue> {
     totalItems: number
     searchable?: boolean
     searchPlaceholder?: string
+    children?: React.ReactNode
 }
 
 export function DataTable<TData, TValue>({
@@ -48,6 +49,7 @@ export function DataTable<TData, TValue>({
     totalItems,
     searchable = true,
     searchPlaceholder = "Cari...",
+    children,
 }: DataTableProps<TData, TValue>) {
     const router = useRouter()
     const pathname = usePathname()
@@ -118,17 +120,20 @@ export function DataTable<TData, TValue>({
     return (
         <div className="space-y-4">
             {searchable && (
-                <div className="flex items-center justify-between">
-                    <div className="relative w-64 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <Input
-                            placeholder={searchPlaceholder}
-                            value={searchValue}
-                            onChange={(e) => setSearchValue(e.target.value)}
-                            className="pl-9"
-                        />
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 flex-1">
+                        <div className="relative w-64 max-w-sm">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Input
+                                placeholder={searchPlaceholder}
+                                value={searchValue}
+                                onChange={(e) => setSearchValue(e.target.value)}
+                                className="pl-9"
+                            />
+                        </div>
+                        {children}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground whitespace-nowrap">
                         Total {totalItems} data
                     </div>
                 </div>
