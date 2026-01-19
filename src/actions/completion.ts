@@ -32,7 +32,7 @@ export async function bulkMarkComplete(items: { itemId: string; notes?: string }
             })
             .eq('id', item.itemId)
             .eq('teacher_id', user.id)
-            .select('*, completion_sheets(student_id)')
+            .select('*, completion_sheets(student_id), subject:subjects(name)')
             .single()
 
         if (error || !updatedItem) return error
@@ -42,7 +42,7 @@ export async function bulkMarkComplete(items: { itemId: string; notes?: string }
             user_id: updatedItem.completion_sheets.student_id,
             type: 'SUBJECT_COMPLETED',
             title: 'Mata Pelajaran Tuntas',
-            message: 'Guru telah menandai ketuntasan mata pelajaran Anda via Batch Approval',
+            message: `Guru telah menandai ketuntasan mata pelajaran ${updatedItem.subject?.name || 'terkait'}`,
             metadata: { completion_item_id: item.itemId },
         })
 
@@ -62,10 +62,10 @@ export async function toggleCompletionItem(itemId: string, notes?: string) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
-    // Get current item
+    // Get current item with subject name
     const { data: item, error: getError } = await supabase
         .from('completion_items')
-        .select('*, completion_sheets(student_id)')
+        .select('*, completion_sheets(student_id), subject:subjects(name)')
         .eq('id', itemId)
         .single()
 
@@ -96,7 +96,7 @@ export async function toggleCompletionItem(itemId: string, notes?: string) {
             user_id: item.completion_sheets.student_id,
             type: 'SUBJECT_COMPLETED',
             title: 'Mata Pelajaran Tuntas',
-            message: 'Guru telah menandai ketuntasan salah satu mata pelajaran Anda',
+            message: `Guru telah menandai ketuntasan mata pelajaran ${item.subject?.name || 'Anda'}`,
             metadata: { completion_item_id: itemId },
         })
     }
