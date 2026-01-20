@@ -500,6 +500,12 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
                                     <div className="flex-1">
                                         <p className="font-medium text-sm text-slate-900">{item.subject?.name}</p>
                                         <p className="text-xs text-slate-500">{item.teacher?.full_name}</p>
+                                        {item.notes && (
+                                            <div className="mt-1 flex items-start gap-1">
+                                                <FileText className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
+                                                <p className="text-xs text-slate-600 italic">"{item.notes}"</p>
+                                            </div>
+                                        )}
                                     </div>
                                     {item.is_completed && (
                                         <span className="text-xs text-green-600">{formatDate(item.completed_at!)}</span>
@@ -513,12 +519,22 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
                             <div className="mt-4 p-4 bg-green-50 rounded-xl">
                                 <p className="text-sm font-medium text-green-800">✓ Disetujui Wali Kelas</p>
                                 <p className="text-xs text-green-700">{selectedSheet.homeroom_approver?.full_name}</p>
+                                {selectedSheet.homeroom_notes && (
+                                    <div className="mt-2 text-xs text-green-800/80 bg-green-100/50 p-2 rounded italic">
+                                        "Catatan: {selectedSheet.homeroom_notes}"
+                                    </div>
+                                )}
                             </div>
                         )}
                         {selectedSheet.counselor_approved && (
                             <div className="mt-2 p-4 bg-green-50 rounded-xl">
                                 <p className="text-sm font-medium text-green-800">✓ Disetujui Guru BK</p>
                                 <p className="text-xs text-green-700">{selectedSheet.counselor_approver?.full_name}</p>
+                                {selectedSheet.counselor_notes && (
+                                    <div className="mt-2 text-xs text-green-800/80 bg-green-100/50 p-2 rounded italic">
+                                        "Catatan: {selectedSheet.counselor_notes}"
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
