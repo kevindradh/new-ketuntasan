@@ -133,7 +133,7 @@ export function ClassDetailsClient({ classData, enrolledStudents, allStudents, m
                         <div>
                             <CardTitle>Daftar Siswa</CardTitle>
                             <CardDescription>
-                                {enrolledStudents.length} siswa terdaftar
+                                {metadata.totalItems} siswa terdaftar
                             </CardDescription>
                         </div>
                         <Dialog open={open} onOpenChange={setOpen}>
@@ -247,7 +247,7 @@ export function ClassDetailsClient({ classData, enrolledStudents, allStudents, m
                                 ) : (
                                     enrolledStudents.map((item, index) => (
                                         <TableRow key={item.id}>
-                                            <TableCell>{index + 1}</TableCell>
+                                            <TableCell>{(metadata.currentPage - 1) * metadata.limit + index + 1}</TableCell>
                                             <TableCell className="font-mono">{item.student.nisn || '-'}</TableCell>
                                             <TableCell className="font-medium">{item.student.full_name}</TableCell>
                                             <TableCell className="text-right">
