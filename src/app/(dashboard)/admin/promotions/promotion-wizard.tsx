@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from "sonner"
@@ -30,6 +30,7 @@ interface Class {
     name: string
     grade_level: number
     academic_year: string
+    major: string | null
 }
 
 interface Student {
@@ -110,7 +111,6 @@ function ClassCombobox({
     )
 }
 
-
 export function PromotionWizard({ classes }: { classes: Class[] }) {
     const router = useRouter()
     const [sourceClassId, setSourceClassId] = useState<string>("")
@@ -163,7 +163,6 @@ export function PromotionWizard({ classes }: { classes: Class[] }) {
                 toast.error(res.error)
             } else if (res.message) {
                 toast.info(res.message)
-                // We still reset state because it was a "successful" server roundtrip (no error)
                 router.refresh()
                 setSourceClassId("")
                 setTargetClassId("")
@@ -172,7 +171,6 @@ export function PromotionWizard({ classes }: { classes: Class[] }) {
             } else {
                 toast.success(`Berhasil mempromosikan ${res.count || 0} siswa!`)
                 router.refresh()
-                // Reset state
                 setSourceClassId("")
                 setTargetClassId("")
                 setStudents([])
@@ -185,9 +183,33 @@ export function PromotionWizard({ classes }: { classes: Class[] }) {
         }
     }
 
-    // Filter target classes to avoid showing source class
-    const targetClasses = classes.filter(c => c.id !== sourceClassId)
-    const canPromote = targetClassId && selectedStudentIds.length > 0 && sourceClassId !== targetClassId
+    // NEW LOGIC START
+    // Helper to parse academic year start (e.g., "2023/2024" -> 2023)
+    const getYearStart = (ay: string) => parseInt(ay.split('/')[0])
+
+    const sourceClass = classes.find(c => c.id === sourceClassId)
+
+    // Filter target classes based on validation rules
+    const targetClasses = classes.filter(c => {
+        if (!sourceClass) return false
+        if (c.id === sourceClassId) return false
+
+        // Rule 1: Same Major (if exists)
+        if (sourceClass.major && c.major !== sourceClass.major) return false
+
+        // Rule 2: Higher Grade Level (Strictly higher)
+        if (c.grade_level <= sourceClass.grade_level) return false
+
+        // Rule 3: Newer Academic Year
+        const sourceYear = getYearStart(sourceClass.academic_year)
+        const targetYear = getYearStart(c.academic_year)
+        if (targetYear <= sourceYear) return false
+
+        return true
+    })
+
+    const canPromote = targetClassId && selectedStudentIds.length > 0 && sourceClass && targetClasses.some(tc => tc.id === targetClassId)
+    // NEW LOGIC END
 
     return (
         <div className="p-6 lg:p-8 space-y-6">
@@ -307,6 +329,11 @@ export function PromotionWizard({ classes }: { classes: Class[] }) {
                                     placeholder="Cari kelas tujuan..."
                                     disabled={!sourceClassId}
                                 />
+                                {sourceClassId && targetClasses.length === 0 && (
+                                    <p className="text-xs text-red-500 mt-2">
+                                        Tidak ada kelas tujuan yang memenuhi syarat (Jurusan sama, Tingkat lebih tinggi, Tahun Ajaran lebih baru).
+                                    </p>
+                                )}
                             </div>
 
                             {/* Info Alert */}

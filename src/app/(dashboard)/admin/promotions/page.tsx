@@ -15,7 +15,7 @@ export default async function PromotionsPage() {
     // We fetch all active classes
     const { data: classes } = await supabase
         .from('classes')
-        .select('id, name, grade_level, academic_year')
+        .select('id, name, grade_level, academic_year, major')
         .order('name', { ascending: true })
     // .eq('is_active', true) // assuming we only promote between active classes
 

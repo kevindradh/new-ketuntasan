@@ -692,6 +692,40 @@ export async function promoteStudents(studentIds: string[], targetClassId: strin
     if (!studentIds.length) return { error: 'Tidak ada siswa yang dipilih' }
     if (!targetClassId) return { error: 'Kelas tujuan harus dipilih' }
 
+    // 0. Validation: Fetch Class Details
+    const { data: targetClass } = await supabaseAdmin.from('classes').select('grade_level, major, academic_year').eq('id', targetClassId).single()
+
+    // We need the source class. We can get it from the *current* enrollment of the first student.
+    // Assuming all selected students are from the same source class (which UI ensures).
+    const { data: firstStudentEnrollment } = await supabaseAdmin.from('class_students').select('class_id, class:classes(grade_level, major, academic_year)').eq('student_id', studentIds[0]).single()
+
+    if (!targetClass) return { error: 'Kelas tujuan tidak valid' }
+    if (!firstStudentEnrollment || !firstStudentEnrollment.class) {
+        // Technically possible if student has no class, but promotion implies moving FROM a class.
+        // If "new student" assignment, use addStudentToClass instead.
+        return { error: 'Data kelas asal tidak ditemukan' }
+    }
+
+    // @ts-ignore
+    const sourceClass = firstStudentEnrollment.class
+
+    // Rule 1: Same Major
+    if (sourceClass.major && sourceClass.major !== targetClass.major) {
+        return { error: `Jurusan tidak sesuai. Asal: ${sourceClass.major}, Tujuan: ${targetClass.major}` }
+    }
+
+    // Rule 2: Higher Grade
+    if (targetClass.grade_level <= sourceClass.grade_level) {
+        return { error: 'Kelas tujuan harus lebih tinggi dari kelas asal.' }
+    }
+
+    // Rule 3: Newer Year
+    const getYearStart = (ay: string) => parseInt(ay.split('/')[0])
+    if (getYearStart(targetClass.academic_year) <= getYearStart(sourceClass.academic_year)) {
+        return { error: 'Tahun ajaran kelas tujuan harus lebih baru.' }
+    }
+
+
     // 1. Check for existing enrollment in target class to prevent duplicates
     const { data: existing } = await supabaseAdmin
         .from('class_students')
