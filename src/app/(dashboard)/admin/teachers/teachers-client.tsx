@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { Plus, Loader2, MoreHorizontal, Pencil, Trash2, ArrowRight, KeyRound } from 'lucide-react'
 import { toast } from 'sonner'
-import { createTeacher, updateTeacher, deleteTeacher, resetUserPassword } from '@/actions/admin'
+import { createTeacher, updateTeacher, deleteTeacher, resetUserPassword, toggleCounselorRole } from '@/actions/admin'
 import type { Profile } from '@/types/database'
 import { DataTable } from '@/components/ui/data-table'
 import { TeacherImportWizard } from './import-wizard'
@@ -27,11 +27,16 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Badge } from '@/components/ui/badge'
 import { ColumnDef } from "@tanstack/react-table"
 import Link from 'next/link'
 
+interface TeacherWithRole extends Profile {
+    is_counselor: boolean
+}
+
 interface TeachersClientProps {
-    items: Profile[]
+    items: TeacherWithRole[]
     pageCount: number
     currentPage: number
     totalItems: number
@@ -48,6 +53,19 @@ export function TeachersClient({
     const [resetPasswordOpen, setResetPasswordOpen] = useState(false)
     const [selectedTeacherForReset, setSelectedTeacherForReset] = useState<Profile | null>(null)
     const [loading, setLoading] = useState(false)
+
+    // ... (rest of the state and handlers remain same until columns)
+
+    const handleToggleCounselor = async (id: string, currentStatus: boolean, name: string) => {
+        if (!confirm(`Apakah Anda yakin ingin ${currentStatus ? 'menghapus' : 'menambahkan'} akses Guru BK untuk ${name}?`)) return
+
+        const result = await toggleCounselorRole(id, !currentStatus)
+        if (result.error) {
+            toast.error(result.error)
+        } else {
+            toast.success(`Akses Guru BK berhasil ${currentStatus ? 'dihapus' : 'ditambahkan'}`)
+        }
+    }
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -76,6 +94,8 @@ export function TeachersClient({
             setLoading(false)
         }
     }
+
+    // ... handlePasswordReset, handleDelete ...
 
     const handlePasswordReset = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -119,10 +139,20 @@ export function TeachersClient({
         }
     }
 
-    const columns: ColumnDef<Profile>[] = [
+    const columns: ColumnDef<TeacherWithRole>[] = [
         {
             accessorKey: "full_name",
             header: "Nama Lengkap",
+            cell: ({ row }) => (
+                <div className="flex items-center gap-2">
+                    <span className="font-medium">{row.getValue("full_name")}</span>
+                    {row.original.is_counselor && (
+                        <Badge variant="secondary" className="text-xs bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-0">
+                            Guru BK
+                        </Badge>
+                    )}
+                </div>
+            )
         },
         {
             accessorKey: "email",
@@ -145,39 +175,51 @@ export function TeachersClient({
                                 <span className="sr-only">Atur Mapel</span>
                             </Link>
                         </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-slate-500 hover:text-slate-900"
-                            onClick={() => {
-                                setEditingTeacher(teacher)
-                                setOpen(true)
-                            }}
-                        >
-                            <Pencil className="h-4 w-4" />
-                            <span className="sr-only">Edit</span>
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                            onClick={() => {
-                                setSelectedTeacherForReset(teacher)
-                                setResetPasswordOpen(true)
-                            }}
-                        >
-                            <KeyRound className="h-4 w-4" />
-                            <span className="sr-only">Reset Password</span>
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => handleDelete(teacher.id)}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Hapus</span>
-                        </Button>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Menu</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => {
+                                    setEditingTeacher(teacher)
+                                    setOpen(true)
+                                }}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Edit Profil
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                    setSelectedTeacherForReset(teacher)
+                                    setResetPasswordOpen(true)
+                                }}>
+                                    <KeyRound className="mr-2 h-4 w-4" />
+                                    Reset Password
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => handleToggleCounselor(teacher.id, teacher.is_counselor, teacher.full_name)}>
+                                    {teacher.is_counselor ? (
+                                        <>
+                                            <Trash2 className="mr-2 h-4 w-4 text-orange-500" />
+                                            <span className="text-orange-600">Hapus Akses BK</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Plus className="mr-2 h-4 w-4 text-indigo-500" />
+                                            <span className="text-indigo-600">Jadikan Guru BK</span>
+                                        </>
+                                    )}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(teacher.id)}>
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Hapus Data
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 )
             },

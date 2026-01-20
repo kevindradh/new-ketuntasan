@@ -756,3 +756,28 @@ export async function promoteStudents(studentIds: string[], targetClassId: strin
     revalidatePath('/admin/classes')
     return { success: true, count: toInsert.length }
 }
+
+// ========== USER ROLES ==========
+export async function toggleCounselorRole(userId: string, isCounselor: boolean) {
+    const supabase = await createClient()
+
+    if (isCounselor) {
+        // Add role
+        const { error } = await supabase.from('user_roles').upsert({
+            user_id: userId,
+            role: 'COUNSELOR'
+        }, { onConflict: 'user_id, role' })
+
+        if (error) return { error: 'Gagal menambahkan role Guru BK: ' + error.message }
+    } else {
+        // Remove role
+        const { error } = await supabase.from('user_roles').delete()
+            .eq('user_id', userId)
+            .eq('role', 'COUNSELOR')
+
+        if (error) return { error: 'Gagal menghapus role Guru BK: ' + error.message }
+    }
+
+    revalidatePath('/admin/teachers')
+    return { success: true }
+}

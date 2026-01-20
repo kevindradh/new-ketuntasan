@@ -40,11 +40,31 @@ export default async function TeachersPage({
         console.error("Error fetching teachers:", error)
     }
 
+    // Check for counselor role
+    const teacherIds = teachers?.map((t: any) => t.id) || []
+
+    // Default to empty array if no teachers found to avoid error in .in()
+    let counselorMap = new Set()
+    if (teacherIds.length > 0) {
+        const { data: counselorRoles } = await supabase
+            .from('user_roles')
+            .select('user_id')
+            .eq('role', 'COUNSELOR')
+            .in('user_id', teacherIds)
+
+        counselorRoles?.forEach(r => counselorMap.add(r.user_id))
+    }
+
+    const items = teachers?.map((t: any) => ({
+        ...t,
+        is_counselor: counselorMap.has(t.id)
+    })) || []
+
     const pageCount = count ? Math.ceil(count / perPage) : 0
 
     return (
         <TeachersClient
-            items={teachers || []}
+            items={items}
             pageCount={pageCount}
             currentPage={page}
             totalItems={count || 0}
