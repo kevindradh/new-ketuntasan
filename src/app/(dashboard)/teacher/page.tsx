@@ -31,7 +31,6 @@ export default async function TeacherDashboard() {
       )
     `)
         .in('class_id', classIds.length ? classIds : ['00000000-0000-0000-0000-000000000000'])
-        .in('status', ['IN_PROGRESS', 'PENDING'])
         .order('updated_at', { ascending: false })
 
     // Filter items that teacher is responsible for
