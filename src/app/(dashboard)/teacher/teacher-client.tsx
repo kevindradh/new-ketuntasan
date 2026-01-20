@@ -27,10 +27,13 @@ interface TeacherDashboardClientProps {
     teacherId: string
 }
 
-export function TeacherDashboardClient({ sheets, teacherId }: TeacherDashboardClientProps) {
+export function TeacherDashboardClient({ sheets, teacherId, teacherSubjectIds }: TeacherDashboardClientProps) {
     // Calculate global stats
     const myItems = sheets.flatMap(s =>
-        s.completion_items?.filter(i => i.teacher_id === teacherId) || []
+        s.completion_items?.filter(i =>
+            // Item belongs to teacher (explicit) OR belongs to one of teacher's subjects
+            i.teacher_id === teacherId || (i.subject_id && teacherSubjectIds.includes(i.subject_id))
+        ) || []
     )
     const completedItems = myItems.filter(i => i.is_completed)
 
@@ -40,7 +43,9 @@ export function TeacherDashboardClient({ sheets, teacherId }: TeacherDashboardCl
     sheets.forEach(sheet => {
         const className = sheet.class?.name || 'Unknown'
         // Only count items for this teacher
-        const sheetItems = sheet.completion_items?.filter(i => i.teacher_id === teacherId) || []
+        const sheetItems = sheet.completion_items?.filter(i =>
+            i.teacher_id === teacherId || (i.subject_id && teacherSubjectIds.includes(i.subject_id))
+        ) || []
 
         if (sheetItems.length === 0) return
 
