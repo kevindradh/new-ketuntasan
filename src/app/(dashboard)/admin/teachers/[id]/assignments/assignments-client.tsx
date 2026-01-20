@@ -72,6 +72,11 @@ export function AssignmentsClient({
     const [selectedClassId, setSelectedClassId] = useState("")
     const [openSubject, setOpenSubject] = useState(false)
     const [openClass, setOpenClass] = useState(false)
+    const [open, setOpen] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    const currentClassId = searchParams.get('classId') || 'all'
 
     // Reset form state when dialog closes
     const handleOpenChange = (newOpen: boolean) => {
