@@ -706,8 +706,9 @@ export async function promoteStudents(studentIds: string[], targetClassId: strin
         return { error: 'Data kelas asal tidak ditemukan' }
     }
 
+    const rawClass = firstStudentEnrollment.class
     // @ts-ignore
-    const sourceClass = firstStudentEnrollment.class
+    const sourceClass = Array.isArray(rawClass) ? rawClass[0] : rawClass
 
     // Rule 1: Same Major
     if (sourceClass.major && sourceClass.major !== targetClass.major) {
