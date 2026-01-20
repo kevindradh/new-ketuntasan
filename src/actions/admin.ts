@@ -440,6 +440,7 @@ export async function createStudent(formData: FormData) {
 
     const email = formData.get('email') as string
     const fullName = formData.get('full_name') as string
+    const nis = formData.get('nis') as string
     const nisn = formData.get('nisn') as string
     const phone = formData.get('phone') as string
     const status = (formData.get('status') as string) || 'ACTIVE'
@@ -469,6 +470,7 @@ export async function createStudent(formData: FormData) {
             id: userId,
             full_name: fullName,
             email: email,
+            nis: nis || null,
             nisn: nisn || null,
             phone: phone || null,
             status: status,
@@ -572,4 +574,91 @@ export async function resetUserPassword(userId: string, newPassword: string) {
         console.error('Reset password error:', err)
         return { error: `Gagal mereset password: ${err.message || 'Terjadi kesalahan sistem'}` }
     }
+}
+
+export async function createStudentsBulk(students: any[]) {
+    const supabaseAdmin = createAdminClient()
+    const results = {
+        success: 0,
+        failed: 0,
+        errors: [] as string[]
+    }
+
+    // Process in batches to avoid overwhelming the Auth API
+    // Small batch size because parallel createUsers might hit rate limits
+    const batchSize = 5
+    for (let i = 0; i < students.length; i += batchSize) {
+        const batch = students.slice(i, i + batchSize)
+
+        await Promise.all(batch.map(async (student) => {
+            try {
+                const email = student.email
+                const fullName = student.full_name
+                const nis = student.nis
+                const nisn = student.nisn
+                const phone = student.phone
+                const status = student.status || 'ACTIVE'
+                const password = student.password || "siswa" + (nis || "12345")
+                const classId = student.class_id
+
+                // 1. Create Auth User
+                const { data: userData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+                    email,
+                    password,
+                    email_confirm: true,
+                    user_metadata: { full_name: fullName }
+                })
+
+                if (authError) throw new Error(`Auth error: ${authError.message}`)
+                if (!userData.user) throw new Error("No user data returned")
+
+                const userId = userData.user.id
+
+                // 2. Insert Profile
+                const { error: profileError } = await supabaseAdmin
+                    .from('profiles')
+                    .upsert({
+                        id: userId,
+                        full_name: fullName,
+                        email: email,
+                        nis: nis || null,
+                        nisn: nisn || null,
+                        phone: phone || null,
+                        status: status,
+                        updated_at: new Date().toISOString(),
+                    })
+
+                if (profileError) {
+                    // Try to rollback user creation
+                    await supabaseAdmin.auth.admin.deleteUser(userId)
+                    throw new Error(`Profile error: ${profileError.message}`)
+                }
+
+                // 3. Assign Role
+                const { error: roleError } = await supabaseAdmin
+                    .from('user_roles')
+                    .insert({ user_id: userId, role: 'STUDENT' })
+
+                if (roleError) throw new Error(`Role error: ${roleError.message}`)
+
+                // 4. Enroll in Class
+                if (classId) {
+                    const { error: enrollError } = await supabaseAdmin
+                        .from('class_students')
+                        .insert({ class_id: classId, student_id: userId })
+
+                    if (enrollError) console.error(`Enroll error for ${email}:`, enrollError)
+                }
+
+                results.success++
+            } catch (err: any) {
+                results.failed++
+                results.errors.push(`${student.full_name} (${student.email}): ${err.message}`)
+            }
+        }))
+    }
+
+    revalidatePath('/admin/students')
+    revalidatePath('/admin/classes')
+    return { success: true, results }
 }

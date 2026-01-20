@@ -8,6 +8,7 @@ export interface Profile {
     id: string
     full_name: string
     nip?: string
+    nis?: string
     nisn?: string
     email: string
     phone?: string

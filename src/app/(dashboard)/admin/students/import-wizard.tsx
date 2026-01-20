@@ -24,7 +24,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Upload, FileDown, CheckCircle, AlertCircle, Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import Papa from 'papaparse'
-import { createStudent } from '@/actions/admin'
+import { createStudent, createStudentsBulk } from '@/actions/admin'
 import { useRouter } from 'next/navigation'
 
 interface StudentImportWizardProps {
@@ -39,15 +39,26 @@ export function StudentImportWizard({ classes }: StudentImportWizardProps) {
     const [parsedData, setParsedData] = useState<any[]>([])
     const [processing, setProcessing] = useState(false)
     const [progress, setProgress] = useState(0)
+    const [processedCount, setProcessedCount] = useState(0)
     const [results, setResults] = useState<{ success: number; failed: number; errors: string[] }>({ success: 0, failed: 0, errors: [] })
     const fileInputRef = useRef<HTMLInputElement>(null)
 
-    const downloadTemplate = () => {
-        const csvContent = "data:text/csv;charset=utf-8," + "full_name,email,nisn,phone,kelas\nJohn Doe,john@example.com,1234567890,08123456789,X RPL 1\nJane Smith,jane@example.com,0987654321,08987654321,XI TKJ 2"
+    const downloadTemplate = (type: 'simple' | 'complete') => {
+        let csvContent = "";
+        let filename = "";
+
+        if (type === 'simple') {
+            csvContent = "data:text/csv;charset=utf-8," + "No,Induk,Nama Siswa,Kelas\n1,1001,Budi Santoso,X RPL 1\n2,1002,Siti Aminah,X RPL 1";
+            filename = "template_siswa_simple.csv";
+        } else {
+            csvContent = "data:text/csv;charset=utf-8," + "full_name,email,nisn,nis,phone,kelas\nJohn Doe,john@example.com,0012345678,1001,08123456789,X RPL 1\nJane Smith,jane@example.com,0987654321,1002,08987654321,XI TKJ 2";
+            filename = "template_siswa_lengkap.csv";
+        }
+
         const encodedUri = encodeURI(csvContent)
         const link = document.createElement("a")
         link.setAttribute("href", encodedUri)
-        link.setAttribute("download", "template_siswa.csv")
+        link.setAttribute("download", filename)
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -75,76 +86,110 @@ export function StudentImportWizard({ classes }: StudentImportWizardProps) {
     }
 
     const validateRow = (row: any) => {
-        return row.full_name && row.email && row.nisn
+        const normalized = normalizeRow(row)
+        // Require Name AND (NIS OR NISN)
+        return normalized.full_name && (normalized.nis || normalized.nisn)
+    }
+
+    const normalizeRow = (row: any) => {
+        return {
+            full_name: row.full_name || row['Nama Siswa'] || row['Nama'] || row['Name'],
+            email: row.email || row['Email'],
+            // Strict mapping: Induk -> nis, NISN -> nisn
+            nisn: row.nisn || row['NISN'],
+            nis: row.nis || row['Induk'] || row['NIS'] || row['No Induk'],
+            phone: row.phone || row['HP'] || row['No HP'] || row['Phone'],
+            kelas: row.kelas || row['Kelas'] || row['Class'],
+            urut: row.urut || row['Urut'] || row['Urt'] || row['No'] || row['Nomor']
+        }
     }
 
     const processImport = async () => {
         setStep(3)
         setProcessing(true)
         setProgress(0)
+        setProcessedCount(0)
+
+        // Filter valid rows first
+        const validRows = parsedData.filter(validateRow)
+        const total = validRows.length
 
         let successCount = 0
         let failedCount = 0
         const errors: string[] = []
 
-        const total = parsedData.length
+        // Prepare data for bulk processing
+        const studentsToCreate = validRows.map(row => {
+            const normalized = normalizeRow(row)
 
-        // Process sequentially to allow UI updates and prevent server overload
-        for (let i = 0; i < total; i++) {
-            const row = parsedData[i]
+            // Auto-generate email if missing
+            let email = normalized.email
+            if (!email) {
+                const cleanName = normalized.full_name.toLowerCase().replace(/[^a-z0-9\s]/g, '')
+                const nameParts = cleanName.split(/\s+/).filter(Boolean)
+                const firstName = nameParts[0]
+                const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : ''
+                const urut = normalized.urut || ''
+                // If only first name, don't leave trailing dot? User spec: [depan].[belakang][urut]
+                // If no belakang, maybe just [depan][urut]?
+                // Let's stick to previous logic: first.last + urut
+                const namePart = lastName ? `${firstName}.${lastName}` : firstName
+                email = `${namePart}${urut}@etuntas.test`
+            }
 
-            // Basic validation
-            if (!validateRow(row)) {
-                failedCount++
-                errors.push(`Row ${i + 2}: Missing required fields (Name, Email, or NISN)`)
-            } else {
-                try {
-                    const formData = new FormData()
-                    formData.append('full_name', row.full_name)
-                    formData.append('email', row.email)
-                    formData.append('nisn', row.nisn)
-                    if (row.phone) formData.append('phone', row.phone)
-
-                    // Class Assignment Logic
-                    if (row.kelas) {
-                        const matchedClass = classes.find(c => c.name.toLowerCase() === row.kelas.trim().toLowerCase())
-                        if (matchedClass) {
-                            formData.append('class_id', matchedClass.id)
-                        } else {
-                            // Warn but proceed? Or error?
-                            // User asked to "match with existing class name".
-                            // It implies if it doesn't match, we can't assign.
-                            // Let's treat it as a warning in the results but still create the student (unassigned)
-                            // OR we could fail the row. Let's fail the row for clearer data integrity if they intended to assign.
-                            // However, strictly adhering "create student" might be safer.
-                            // Let's try to match logic: "If class provided but not found -> ERROR" is safer than silent fail.
-
-                            // Actually, let's allow creation but log warning in errors?
-                            // "Row X created but class 'Foo' not found"
-
-                            // For this iteration, let's treat it as an error to ensure they fix the CSV.
-                            throw new Error(`Kelas '${row.kelas}' tidak ditemukan di sistem.`)
-                        }
-                    }
-
-                    // Default password logic handled on server if needed or generate one
-                    // Assuming createStudent handles basic creation with default password
-
-                    const result = await createStudent(formData)
-
-                    if (result.error) {
-                        failedCount++
-                        errors.push(`Row ${i + 2} (${row.full_name}): ${result.error}`)
-                    } else {
-                        successCount++
-                    }
-                } catch (err) {
-                    failedCount++
-                    errors.push(`Row ${i + 2} (${row.full_name}): Unknown error`)
+            // Find Class ID
+            let classId = undefined
+            if (normalized.kelas) {
+                const matchedClass = classes.find(c => c.name.toLowerCase() === normalized.kelas.trim().toLowerCase())
+                if (matchedClass) {
+                    classId = matchedClass.id
                 }
             }
 
-            setProgress(Math.round(((i + 1) / total) * 100))
+            return {
+                full_name: normalized.full_name,
+                email: email,
+                nis: normalized.nis,
+                nisn: normalized.nisn,
+                phone: normalized.phone,
+                class_id: classId,
+                status: 'ACTIVE',
+                // Password default
+                password: 'etuntas123'
+            }
+        })
+
+        // Batch processing using server-side bulk action
+        // or client-side batching calling createStudentsBulk
+        // We'll call createStudentsBulk in chunks from client to update progress bar
+        const BATCH_SIZE = 20
+
+        for (let i = 0; i < studentsToCreate.length; i += BATCH_SIZE) {
+            const batch = studentsToCreate.slice(i, i + BATCH_SIZE)
+
+            try {
+                const result = await createStudentsBulk(batch)
+
+                successCount += result.results.success
+                failedCount += result.results.failed
+                if (result.results.errors) {
+                    errors.push(...result.results.errors)
+                }
+            } catch (err: any) {
+                failedCount += batch.length
+                errors.push(`Batch error (${i}-${i + batch.length}): ${err.message}`)
+            }
+
+            const newProcessedCount = Math.min(i + BATCH_SIZE, total)
+            setProcessedCount(newProcessedCount)
+            setProgress(Math.round((newProcessedCount / total) * 100))
+        }
+
+        // Add count of invalid rows that were skipped entirely
+        const invalidCount = parsedData.length - validRows.length
+        if (invalidCount > 0) {
+            failedCount += invalidCount
+            errors.push(`${invalidCount} rows were skipped due to missing required fields (Name or NIS/NISN)`)
         }
 
         setResults({ success: successCount, failed: failedCount, errors })
@@ -206,12 +251,17 @@ export function StudentImportWizard({ classes }: StudentImportWizardProps) {
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-slate-900">Template Import</p>
-                                    <p className="text-xs text-slate-500">Gunakan template ini untuk format yang benar</p>
+                                    <p className="text-xs text-slate-500">Pilih format template yang diinginkan</p>
                                 </div>
                             </div>
-                            <Button variant="ghost" size="sm" onClick={downloadTemplate}>
-                                Download
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={() => downloadTemplate('simple')}>
+                                    Simple
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => downloadTemplate('complete')}>
+                                    Lengkap
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -242,23 +292,26 @@ export function StudentImportWizard({ classes }: StudentImportWizardProps) {
                                 </TableHeader>
                                 <TableBody>
                                     {parsedData.slice(0, 100).map((row, i) => {
+                                        const normalized = normalizeRow(row)
                                         const isValid = validateRow(row)
                                         return (
                                             <TableRow key={i}>
-                                                <TableCell className="font-medium">{row.full_name || '-'}</TableCell>
-                                                <TableCell>{row.email || '-'}</TableCell>
-                                                <TableCell>{row.nisn || '-'}</TableCell>
+                                                <TableCell className="font-medium">{normalized.full_name || '-'}</TableCell>
                                                 <TableCell>
-                                                    {row.kelas ? (
-                                                        classes.some(c => c.name.toLowerCase() === row.kelas.trim().toLowerCase())
-                                                            ? <span className="text-green-600 font-medium">{row.kelas}</span>
-                                                            : <span className="text-red-500 font-medium flex items-center gap-1"><AlertCircle className="h-3 w-3" />Undefined: {row.kelas}</span>
+                                                    {normalized.email || <span className="text-blue-500 italic text-xs">Auto-generate</span>}
+                                                </TableCell>
+                                                <TableCell>{normalized.nis || normalized.nisn || '-'}</TableCell>
+                                                <TableCell>
+                                                    {normalized.kelas ? (
+                                                        classes.some(c => c.name.toLowerCase() === normalized.kelas.trim().toLowerCase())
+                                                            ? <span className="text-green-600 font-medium">{normalized.kelas}</span>
+                                                            : <span className="text-red-500 font-medium flex items-center gap-1"><AlertCircle className="h-3 w-3" />Undefined: {normalized.kelas}</span>
                                                     ) : (
                                                         <span className="text-slate-400 italic">No Class</span>
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {isValid && (!row.kelas || classes.some(c => c.name.toLowerCase() === row.kelas.trim().toLowerCase()))
+                                                    {isValid && (!normalized.kelas || classes.some(c => c.name.toLowerCase() === normalized.kelas.trim().toLowerCase()))
                                                         ? <CheckCircle className="h-4 w-4 text-green-500" />
                                                         : <AlertCircle className="h-4 w-4 text-red-500" />
                                                     }
@@ -305,7 +358,7 @@ export function StudentImportWizard({ classes }: StudentImportWizardProps) {
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="font-medium text-slate-700">Memproses data...</span>
-                                    <span className="text-slate-500">{results.success + results.failed} / {parsedData.length}</span>
+                                    <span className="text-slate-500">{processedCount} / {parsedData.length}</span>
                                 </div>
                                 <Progress value={progress} className="h-3" />
                                 <p className="text-xs text-center text-slate-400">Mohon jangan tutup jendela ini</p>
