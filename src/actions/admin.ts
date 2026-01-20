@@ -662,3 +662,62 @@ export async function createStudentsBulk(students: any[]) {
     revalidatePath('/admin/classes')
     return { success: true, results }
 }
+
+// ========== PROMOTIONS ==========
+export async function getStudentsByClass(classId: string) {
+    const supabase = await createClient()
+
+    const { data: students, error } = await supabase
+        .from('class_students')
+        .select(`
+            student_id,
+            student:profiles!student_id(
+                id,
+                full_name,
+                nis,
+                nisn
+            )
+        `)
+        .eq('class_id', classId)
+
+    if (error) throw new Error(error.message)
+
+    // Flatten and return
+    return students.map((s: any) => s.student).sort((a: any, b: any) => a.full_name.localeCompare(b.full_name))
+}
+
+export async function promoteStudents(studentIds: string[], targetClassId: string) {
+    const supabaseAdmin = createAdminClient()
+
+    if (!studentIds.length) return { error: 'Tidak ada siswa yang dipilih' }
+    if (!targetClassId) return { error: 'Kelas tujuan harus dipilih' }
+
+    // 1. Check for existing enrollment in target class to prevent duplicates
+    const { data: existing } = await supabaseAdmin
+        .from('class_students')
+        .select('student_id')
+        .eq('class_id', targetClassId)
+        .in('student_id', studentIds)
+
+    const existingIds = new Set(existing?.map(e => e.student_id))
+    const toInsert = studentIds
+        .filter(id => !existingIds.has(id))
+        .map(id => ({
+            class_id: targetClassId,
+            student_id: id
+        }))
+
+    if (toInsert.length === 0) {
+        return { success: true, message: 'Semua siswa sudah terdaftar di kelas tujuan.' }
+    }
+
+    // 2. Insert new enrollments
+    const { error } = await supabaseAdmin
+        .from('class_students')
+        .insert(toInsert)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/classes')
+    return { success: true, count: toInsert.length }
+}

@@ -17,6 +17,7 @@ import {
   Bell,
   ChevronRight,
   Eye,
+  TrendingUp,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
@@ -101,6 +102,11 @@ const roleMenus: Record<UserRole, { title: string; url: string; icon: React.Elem
       title: "Guru",
       url: "/admin/teachers",
       icon: Users,
+    },
+    {
+      title: "Kenaikan Kelas",
+      url: "/admin/promotions",
+      icon: TrendingUp,
     },
   ],
   TEACHER: [
