@@ -41,7 +41,6 @@ export function useRealtimeNotifications(userId: string | null) {
                     event: 'INSERT',
                     schema: 'public',
                     table: 'notifications',
-                    filter: `user_id=eq.${userId}`,
                 },
                 (payload) => {
                     const newNotif = payload.new as Notification
@@ -53,7 +52,9 @@ export function useRealtimeNotifications(userId: string | null) {
                     })
                 }
             )
-            .subscribe()
+            .subscribe((status) => {
+                console.log('Realtime subscription status:', status)
+            })
 
         return () => {
             supabase.removeChannel(channel)

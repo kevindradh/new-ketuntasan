@@ -379,7 +379,7 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
                     {notifications.map((notif) => (
                         <div
                             key={notif.id}
-                            className={`p-4 rounded-2xl shadow-sm border transition-colors ${notif.is_read ? 'bg-white border-transparent' : 'bg-blue-50 border-blue-100'
+                            className={`p-4 rounded-2xl shadow-sm border transition-colors ${notif.is_read ? 'bg-white border-slate-200' : 'bg-white border-blue-200 ring-1 ring-blue-50'
                                 }`}
                             onClick={() => markAsRead(notif.id)}
                         >
