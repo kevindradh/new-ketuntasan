@@ -25,6 +25,8 @@ export default async function StudentPage() {
             class:classes(id, name, grade_level, major)
         `)
         .eq('student_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .single()
 
     // Get completion sheets for this student
