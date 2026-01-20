@@ -39,7 +39,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 
 interface StudentsClientProps {
     items: Profile[]
-    classes: { id: string, name: string }[]
+    classes: { id: string, name: string, academic_year: string }[]
     pageCount: number
     currentPage: number
     totalItems: number

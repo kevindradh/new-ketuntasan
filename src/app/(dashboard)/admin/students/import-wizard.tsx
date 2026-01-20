@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -11,6 +11,13 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import {
     Table,
     TableBody,
@@ -28,7 +35,7 @@ import { createStudent, createStudentsBulk } from '@/actions/admin'
 import { useRouter } from 'next/navigation'
 
 interface StudentImportWizardProps {
-    classes: { id: string, name: string }[]
+    classes: { id: string, name: string, academic_year: string }[]
 }
 
 export function StudentImportWizard({ classes }: StudentImportWizardProps) {
@@ -41,7 +48,31 @@ export function StudentImportWizard({ classes }: StudentImportWizardProps) {
     const [progress, setProgress] = useState(0)
     const [processedCount, setProcessedCount] = useState(0)
     const [results, setResults] = useState<{ success: number; failed: number; errors: string[] }>({ success: 0, failed: 0, errors: [] })
+    const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>("")
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    // Get unique academic years, sort descending (newest first)
+    const academicYears = Array.from(new Set(classes.map(c => c.academic_year))).sort().reverse()
+
+    // Set default academic year to the latest one if available
+    useEffect(() => {
+        if (academicYears.length > 0 && !selectedAcademicYear) {
+            setSelectedAcademicYear(academicYears[0])
+        }
+    }, [academicYears, selectedAcademicYear])
+
+    // Protect against accidental tab closure
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (processing) {
+                e.preventDefault()
+                e.returnValue = '' // Chrome requires returnValue to be set
+            }
+        }
+
+        window.addEventListener('beforeunload', handleBeforeUnload)
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+    }, [processing])
 
     const downloadTemplate = (type: 'simple' | 'complete') => {
         let csvContent = "";
@@ -105,6 +136,11 @@ export function StudentImportWizard({ classes }: StudentImportWizardProps) {
     }
 
     const processImport = async () => {
+        if (!selectedAcademicYear) {
+            toast.error("Pilih tahun ajaran terlebih dahulu")
+            return
+        }
+
         setStep(3)
         setProcessing(true)
         setProgress(0)
@@ -130,17 +166,17 @@ export function StudentImportWizard({ classes }: StudentImportWizardProps) {
                 const firstName = nameParts[0]
                 const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : ''
                 const urut = normalized.urut || ''
-                // If only first name, don't leave trailing dot? User spec: [depan].[belakang][urut]
-                // If no belakang, maybe just [depan][urut]?
-                // Let's stick to previous logic: first.last + urut
                 const namePart = lastName ? `${firstName}.${lastName}` : firstName
                 email = `${namePart}${urut}@etuntas.test`
             }
 
-            // Find Class ID
+            // Find Class ID - considering ACADEMIC YEAR
             let classId = undefined
             if (normalized.kelas) {
-                const matchedClass = classes.find(c => c.name.toLowerCase() === normalized.kelas.trim().toLowerCase())
+                const matchedClass = classes.find(c =>
+                    c.name.toLowerCase() === normalized.kelas.trim().toLowerCase() &&
+                    c.academic_year === selectedAcademicYear
+                )
                 if (matchedClass) {
                     classId = matchedClass.id
                 }
@@ -204,14 +240,24 @@ export function StudentImportWizard({ classes }: StudentImportWizardProps) {
         setProcessing(false)
         setProgress(0)
         setResults({ success: 0, failed: 0, errors: [] })
+        // Keep selected academic year
         if (fileInputRef.current) fileInputRef.current.value = ''
     }
 
     const validCount = parsedData.filter(validateRow).length
     const invalidCount = parsedData.length - validCount
 
+    // Add necessary imports for Select component manually (Next Step)
+
     return (
-        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset() }}>
+        <Dialog open={open} onOpenChange={(v) => {
+            if (processing && !v) {
+                toast.warning("Mohon tunggu hingga proses import selesai.")
+                return
+            }
+            setOpen(v)
+            if (!v) reset()
+        }}>
             <DialogTrigger asChild>
                 <Button variant="outline" className="border-dashed">
                     <Upload className="h-4 w-4 mr-2" />
@@ -222,12 +268,29 @@ export function StudentImportWizard({ classes }: StudentImportWizardProps) {
                 <DialogHeader>
                     <DialogTitle>Import Data Siswa</DialogTitle>
                     <DialogDescription>
-                        Import data siswa secara massal menggunakan file CSV.
+                        Import data siswa secara massal. Pilih tahun ajaran target untuk pencocokan kelas.
                     </DialogDescription>
                 </DialogHeader>
 
                 {step === 1 && (
                     <div className="space-y-6 py-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700">Tahun Ajaran Target</label>
+                            <Select value={selectedAcademicYear} onValueChange={setSelectedAcademicYear}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Pilih Tahun Ajaran" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {academicYears.map(year => (
+                                        <SelectItem key={year} value={year}>{year}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-slate-500">
+                                Import akan mencocokkan nama kelas dari CSV dengan kelas yang ada di tahun ajaran ini.
+                            </p>
+                        </div>
+
                         <div className="border-2 border-dashed border-slate-200 rounded-lg p-10 flex flex-col items-center justify-center text-center space-y-4 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                             <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                                 <Upload className="h-6 w-6" />
@@ -303,7 +366,10 @@ export function StudentImportWizard({ classes }: StudentImportWizardProps) {
                                                 <TableCell>{normalized.nis || normalized.nisn || '-'}</TableCell>
                                                 <TableCell>
                                                     {normalized.kelas ? (
-                                                        classes.some(c => c.name.toLowerCase() === normalized.kelas.trim().toLowerCase())
+                                                        classes.some(c =>
+                                                            c.name.toLowerCase() === normalized.kelas.trim().toLowerCase() &&
+                                                            c.academic_year === selectedAcademicYear
+                                                        )
                                                             ? <span className="text-green-600 font-medium">{normalized.kelas}</span>
                                                             : <span className="text-red-500 font-medium flex items-center gap-1"><AlertCircle className="h-3 w-3" />Undefined: {normalized.kelas}</span>
                                                     ) : (
@@ -311,7 +377,10 @@ export function StudentImportWizard({ classes }: StudentImportWizardProps) {
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {isValid && (!normalized.kelas || classes.some(c => c.name.toLowerCase() === normalized.kelas.trim().toLowerCase()))
+                                                    {isValid && (!normalized.kelas || classes.some(c =>
+                                                        c.name.toLowerCase() === normalized.kelas.trim().toLowerCase() &&
+                                                        c.academic_year === selectedAcademicYear
+                                                    ))
                                                         ? <CheckCircle className="h-4 w-4 text-green-500" />
                                                         : <AlertCircle className="h-4 w-4 text-red-500" />
                                                     }

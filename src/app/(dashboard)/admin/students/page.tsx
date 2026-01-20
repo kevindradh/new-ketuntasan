@@ -59,7 +59,7 @@ export default async function StudentsPage({
     // 2. Fetch Classes for Filter/Import Validation
     const { data: classes } = await supabase
         .from('classes')
-        .select('id, name')
+        .select('id, name, academic_year')
         .order('name')
 
     const pageCount = count ? Math.ceil(count / perPage) : 0
