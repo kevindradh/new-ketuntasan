@@ -15,6 +15,21 @@ export function useRealtimeNotifications(userId: string | null) {
             return
         }
 
+        // Register Service Worker and Request Permission
+        if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'Notification' in window) {
+            navigator.serviceWorker.register('/sw.js')
+                .then((registration) => {
+                    console.log('SW registered:', registration)
+                })
+                .catch((err) => {
+                    console.log('SW registration failed:', err)
+                })
+
+            if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+                Notification.requestPermission()
+            }
+        }
+
         const supabase = createClient()
 
         // Fetch initial notifications
@@ -42,7 +57,7 @@ export function useRealtimeNotifications(userId: string | null) {
                     schema: 'public',
                     table: 'notifications',
                 },
-                (payload) => {
+                async (payload) => {
                     const newNotif = payload.new as Notification
                     setNotifications((prev) => [newNotif, ...prev])
 
@@ -50,6 +65,25 @@ export function useRealtimeNotifications(userId: string | null) {
                     toast(newNotif.title, {
                         description: newNotif.message,
                     })
+
+                    // Show Service Worker Notification (System Notification)
+                    if (
+                        typeof window !== 'undefined' &&
+                        'serviceWorker' in navigator &&
+                        'Notification' in window &&
+                        Notification.permission === 'granted'
+                    ) {
+                        try {
+                            const registration = await navigator.serviceWorker.ready
+                            registration.showNotification(newNotif.title, {
+                                body: newNotif.message,
+                                icon: '/icon.png', // Fallback or use specific icon
+                                tag: newNotif.id,
+                            })
+                        } catch (e) {
+                            console.error('Failed to show system notification', e)
+                        }
+                    }
                 }
             )
             .subscribe((status) => {
