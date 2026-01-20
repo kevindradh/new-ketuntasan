@@ -21,7 +21,21 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, Trash2, Loader2, Users } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, Users, Check, ChevronsUpDown } from 'lucide-react'
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
 import { toast } from 'sonner'
 import { createClass, updateClass, deleteClass } from '@/actions/admin'
 import type { Class } from '@/types/database'
@@ -47,6 +61,33 @@ export function ClassesClient({ items, teachers, counselors, pageCount, currentP
     const searchParams = useSearchParams()
     const currentGrade = searchParams.get('grade') || 'all'
 
+    // Combobox states
+    const [selectedHomeroomId, setSelectedHomeroomId] = useState("")
+    const [selectedCounselorId, setSelectedCounselorId] = useState("")
+    const [openHomeroom, setOpenHomeroom] = useState(false)
+    const [openCounselor, setOpenCounselor] = useState(false)
+
+    const handleOpenChange = (newOpen: boolean) => {
+        setOpen(newOpen)
+        if (!newOpen) {
+            setEditingClass(null)
+            setSelectedHomeroomId("")
+            setSelectedCounselorId("")
+        }
+    }
+
+    const handleEdit = (cls: Class | null) => {
+        setEditingClass(cls)
+        if (cls) {
+            setSelectedHomeroomId(cls.homeroom_teacher_id || "")
+            setSelectedCounselorId(cls.counselor_id || "")
+        } else {
+            setSelectedHomeroomId("")
+            setSelectedCounselorId("")
+        }
+        setOpen(true)
+    }
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setLoading(true)
@@ -62,8 +103,7 @@ export function ClassesClient({ items, teachers, counselors, pageCount, currentP
                 toast.error(result.error)
             } else {
                 toast.success(editingClass ? 'Kelas diperbarui' : 'Kelas ditambahkan')
-                setOpen(false)
-                setEditingClass(null)
+                handleOpenChange(false)
             }
         } catch {
             toast.error('Terjadi kesalahan')
@@ -142,7 +182,7 @@ export function ClassesClient({ items, teachers, counselors, pageCount, currentP
                         <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => { setEditingClass(cls); setOpen(true) }}
+                            onClick={() => handleEdit(cls)}
                         >
                             <Pencil className="h-4 w-4" />
                         </Button>
@@ -174,9 +214,9 @@ export function ClassesClient({ items, teachers, counselors, pageCount, currentP
                     <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Kelas</h1>
                     <p className="text-slate-500 mt-1">Kelola daftar kelas</p>
                 </div>
-                <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditingClass(null) }}>
+                <Dialog open={open} onOpenChange={handleOpenChange}>
                     <DialogTrigger asChild>
-                        <Button className="gradient-primary border-0">
+                        <Button className="gradient-primary border-0" onClick={() => handleEdit(null)}>
                             <Plus className="h-4 w-4 mr-2" />
                             Tambah Kelas
                         </Button>
@@ -238,38 +278,103 @@ export function ClassesClient({ items, teachers, counselors, pageCount, currentP
                                     </Select>
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="homeroom_teacher_id">Wali Kelas</Label>
-                                <Select name="homeroom_teacher_id" defaultValue={editingClass?.homeroom_teacher_id || ''}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih wali kelas" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {teachers.map(teacher => (
-                                            <SelectItem key={teacher.id} value={teacher.id}>
-                                                {teacher.full_name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                            <div className="space-y-2 flex flex-col">
+                                <Label>Wali Kelas</Label>
+                                <Popover open={openHomeroom} onOpenChange={setOpenHomeroom}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            aria-expanded={openHomeroom}
+                                            className="justify-between font-normal"
+                                        >
+                                            {selectedHomeroomId
+                                                ? teachers.find((t) => t.id === selectedHomeroomId)?.full_name
+                                                : "Pilih wali kelas..."}
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="p-0" align="start">
+                                        <Command>
+                                            <CommandInput placeholder="Cari guru..." />
+                                            <CommandList>
+                                                <CommandEmpty>Guru tidak ditemukan.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {teachers.map((teacher) => (
+                                                        <CommandItem
+                                                            key={teacher.id}
+                                                            value={teacher.full_name}
+                                                            onSelect={() => {
+                                                                setSelectedHomeroomId(teacher.id)
+                                                                setOpenHomeroom(false)
+                                                            }}
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    "mr-2 h-4 w-4",
+                                                                    selectedHomeroomId === teacher.id ? "opacity-100" : "opacity-0"
+                                                                )}
+                                                            />
+                                                            {teacher.full_name}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                                <input type="hidden" name="homeroom_teacher_id" value={selectedHomeroomId} />
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="counselor_id">Guru BK</Label>
-                                <Select name="counselor_id" defaultValue={editingClass?.counselor_id || ''}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih Guru BK" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {counselors.map(c => (
-                                            <SelectItem key={c.id} value={c.id}>
-                                                {c.full_name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+
+                            <div className="space-y-2 flex flex-col">
+                                <Label>Guru BK</Label>
+                                <Popover open={openCounselor} onOpenChange={setOpenCounselor}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            aria-expanded={openCounselor}
+                                            className="justify-between font-normal"
+                                        >
+                                            {selectedCounselorId
+                                                ? counselors.find((c) => c.id === selectedCounselorId)?.full_name
+                                                : "Pilih Guru BK..."}
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="p-0" align="start">
+                                        <Command>
+                                            <CommandInput placeholder="Cari guru BK..." />
+                                            <CommandList>
+                                                <CommandEmpty>Guru BK tidak ditemukan.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {counselors.map((c) => (
+                                                        <CommandItem
+                                                            key={c.id}
+                                                            value={c.full_name}
+                                                            onSelect={() => {
+                                                                setSelectedCounselorId(c.id)
+                                                                setOpenCounselor(false)
+                                                            }}
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    "mr-2 h-4 w-4",
+                                                                    selectedCounselorId === c.id ? "opacity-100" : "opacity-0"
+                                                                )}
+                                                            />
+                                                            {c.full_name}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                                <input type="hidden" name="counselor_id" value={selectedCounselorId} />
                             </div>
                             <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                                <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
                                     Batal
                                 </Button>
                                 <Button type="submit" className="gradient-primary border-0" disabled={loading}>
