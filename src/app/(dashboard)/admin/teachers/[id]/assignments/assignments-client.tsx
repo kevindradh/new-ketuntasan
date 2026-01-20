@@ -25,8 +25,21 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, Plus, Trash2, BookOpen, GraduationCap, Loader2 } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, BookOpen, GraduationCap, Loader2, Check, ChevronsUpDown } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -34,6 +47,7 @@ import { createTeacherAssignment, deleteTeacherAssignment } from '@/actions/admi
 import type { Profile } from '@/types/database'
 import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from "@tanstack/react-table"
+import { cn } from "@/lib/utils"
 
 interface AssignmentsClientProps {
     teacher: Profile
@@ -54,19 +68,33 @@ export function AssignmentsClient({
     currentPage,
     totalItems
 }: AssignmentsClientProps) {
-    const [open, setOpen] = useState(false)
-    const [loading, setLoading] = useState(false)
-    const router = useRouter()
-    const searchParams = useSearchParams()
-    const currentClassId = searchParams.get('classId') || 'all'
+    const [selectedSubjectId, setSelectedSubjectId] = useState("")
+    const [selectedClassId, setSelectedClassId] = useState("")
+    const [openSubject, setOpenSubject] = useState(false)
+    const [openClass, setOpenClass] = useState(false)
+
+    // Reset form state when dialog closes
+    const handleOpenChange = (newOpen: boolean) => {
+        setOpen(newOpen)
+        if (!newOpen) {
+            setSelectedSubjectId("")
+            setSelectedClassId("")
+        }
+    }
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
+        if (!selectedSubjectId || !selectedClassId) {
+            toast.error("Mohon pilih Mapel dan Kelas")
+            return
+        }
         setLoading(true)
 
         const formData = new FormData(e.currentTarget)
-        const classId = formData.get('class_id') as string
-        const selectedClass = classes.find(c => c.id === classId)
+        // Manual append because we use controlled components for comboboxes
+        // (Though hidden inputs below handle it, this is a safety double-check if needed, but formData.get will work from hidden inputs)
+
+        const selectedClass = classes.find(c => c.id === selectedClassId)
 
         if (selectedClass) {
             formData.append('academic_year', selectedClass.academic_year)
@@ -82,10 +110,11 @@ export function AssignmentsClient({
             toast.error(result.error)
         } else {
             toast.success('Penugasan berhasil ditambahkan')
-            setOpen(false)
+            handleOpenChange(false)
         }
     }
 
+    // ... existing handleDelete ...
     const handleDelete = async (id: string) => {
         if (!confirm('Hapus penugasan ini?')) return
 
@@ -97,6 +126,7 @@ export function AssignmentsClient({
         }
     }
 
+    // ... existing columns ...
     const columns: ColumnDef<any>[] = [
         {
             accessorKey: "subject.name",
@@ -164,48 +194,129 @@ export function AssignmentsClient({
                             </div>
                         </div>
                     </div>
-                    <Dialog open={open} onOpenChange={setOpen}>
+                    <Dialog open={open} onOpenChange={handleOpenChange}>
                         <DialogTrigger asChild>
                             <Button className="gradient-primary border-0">
                                 <Plus className="h-4 w-4 mr-2" />
-                                Tambah Penugasan
+                                <span className='hidden sm:inline'>Tambah Penugasan</span>
+                                <span className='sm:hidden'>Tambah</span>
                             </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="sm:max-w-[500px]">
                             <DialogHeader>
                                 <DialogTitle>Tambah Penugasan</DialogTitle>
                                 <DialogDescription>
                                     Tetapkan mata pelajaran dan kelas untuk guru ini.
                                 </DialogDescription>
                             </DialogHeader>
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="subject_id">Mata Pelajaran</Label>
-                                    <Select name="subject_id" required>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Pilih Mapel" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {subjects.map(s => (
-                                                <SelectItem key={s.id} value={s.id}>{s.name} ({s.code})</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+                                <input type="hidden" name="subject_id" value={selectedSubjectId} />
+                                <input type="hidden" name="class_id" value={selectedClassId} />
+
+                                <div className="space-y-2 flex flex-col">
+                                    <Label>Mata Pelajaran</Label>
+                                    <Popover open={openSubject} onOpenChange={setOpenSubject}>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                role="combobox"
+                                                aria-expanded={openSubject}
+                                                className="justify-between font-normal"
+                                            >
+                                                {selectedSubjectId
+                                                    ? subjects.find((s) => s.id === selectedSubjectId)?.name
+                                                    : "Pilih Mata Pelajaran..."}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="p-0" align="start">
+                                            <Command>
+                                                <CommandInput placeholder="Cari mapel..." />
+                                                <CommandList>
+                                                    <CommandEmpty>Mapel tidak ditemukan.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        {subjects.map((subject) => (
+                                                            <CommandItem
+                                                                key={subject.id}
+                                                                value={subject.name + " " + subject.code}
+                                                                onSelect={() => {
+                                                                    setSelectedSubjectId(subject.id)
+                                                                    setOpenSubject(false)
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        selectedSubjectId === subject.id ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                <div className="flex flex-col">
+                                                                    <span>{subject.name}</span>
+                                                                    <span className="text-xs text-muted-foreground">{subject.code}</span>
+                                                                </div>
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="class_id">Kelas</Label>
-                                    <Select name="class_id" required>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Pilih Kelas" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {classes.map(c => (
-                                                <SelectItem key={c.id} value={c.id}>{c.name} ({c.academic_year})</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+
+                                <div className="space-y-2 flex flex-col">
+                                    <Label>Kelas</Label>
+                                    <Popover open={openClass} onOpenChange={setOpenClass}>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                role="combobox"
+                                                aria-expanded={openClass}
+                                                className="justify-between font-normal"
+                                            >
+                                                {selectedClassId
+                                                    ? classes.find((c) => c.id === selectedClassId)?.name
+                                                    : "Pilih Kelas..."}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="p-0" align="start">
+                                            <Command>
+                                                <CommandInput placeholder="Cari kelas..." />
+                                                <CommandList>
+                                                    <CommandEmpty>Kelas tidak ditemukan.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        {classes.map((c) => (
+                                                            <CommandItem
+                                                                key={c.id}
+                                                                value={c.name}
+                                                                onSelect={() => {
+                                                                    setSelectedClassId(c.id)
+                                                                    setOpenClass(false)
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        selectedClassId === c.id ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                <div className="flex flex-col">
+                                                                    <span>{c.name}</span>
+                                                                    <span className="text-xs text-muted-foreground">{c.academic_year}</span>
+                                                                </div>
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
                                 </div>
-                                <DialogFooter>
+
+                                <DialogFooter className="pt-4">
+                                    <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+                                        Batal
+                                    </Button>
                                     <Button type="submit" className="gradient-primary border-0" disabled={loading}>
                                         {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                                         Simpan
