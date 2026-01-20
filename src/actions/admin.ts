@@ -60,6 +60,15 @@ export async function createClass(formData: FormData) {
 
     if (error) return { error: error.message }
 
+    // Auto-assign HOMEROOM role
+    const homeroomId = formData.get('homeroom_teacher_id') as string
+    if (homeroomId) {
+        await supabase.from('user_roles').upsert({
+            user_id: homeroomId,
+            role: 'HOMEROOM'
+        }, { onConflict: 'user_id, role' })
+    }
+
     revalidatePath('/admin/classes')
     return { success: true }
 }
@@ -77,6 +86,15 @@ export async function updateClass(id: string, formData: FormData) {
     }).eq('id', id)
 
     if (error) return { error: error.message }
+
+    // Auto-assign HOMEROOM role
+    const homeroomId = formData.get('homeroom_teacher_id') as string
+    if (homeroomId) {
+        await supabase.from('user_roles').upsert({
+            user_id: homeroomId,
+            role: 'HOMEROOM'
+        }, { onConflict: 'user_id, role' })
+    }
 
     revalidatePath('/admin/classes')
     return { success: true }
