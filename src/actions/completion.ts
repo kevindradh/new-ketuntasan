@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 // ========== TOGGLE COMPLETION ITEM ==========
@@ -38,7 +39,8 @@ export async function bulkMarkComplete(items: { itemId: string; notes?: string }
         if (error || !updatedItem) return error
 
         // Send notification to student
-        await supabase.from('notifications').insert({
+        const supabaseAdmin = createAdminClient()
+        await supabaseAdmin.from('notifications').insert({
             user_id: updatedItem.completion_sheets.student_id,
             type: 'SUBJECT_COMPLETED',
             title: 'Mata Pelajaran Tuntas',
@@ -92,7 +94,8 @@ export async function toggleCompletionItem(itemId: string, notes?: string) {
 
     // Send notification to student if completed
     if (newCompleted) {
-        await supabase.from('notifications').insert({
+        const supabaseAdmin = createAdminClient()
+        await supabaseAdmin.from('notifications').insert({
             user_id: item.completion_sheets.student_id,
             type: 'SUBJECT_COMPLETED',
             title: 'Mata Pelajaran Tuntas',
@@ -153,7 +156,8 @@ export async function approveAsHomeroom(sheetId: string, notes?: string) {
         .limit(1)
 
     // Send notifications
-    await supabase.from('notifications').insert([
+    const supabaseAdmin = createAdminClient()
+    await supabaseAdmin.from('notifications').insert([
         {
             user_id: sheet.student_id,
             type: 'HOMEROOM_APPROVED',
@@ -201,7 +205,8 @@ export async function rejectAsHomeroom(sheetId: string, reason: string) {
     if (error) return { error: error.message }
 
     // Notify student
-    await supabase.from('notifications').insert({
+    const supabaseAdmin = createAdminClient()
+    await supabaseAdmin.from('notifications').insert({
         user_id: sheet.student_id,
         type: 'HOMEROOM_REJECTED',
         title: 'Lembar Ketuntasan Ditolak',
@@ -248,8 +253,9 @@ export async function approveAsCounselor(sheetId: string, notes?: string) {
 
     if (updateError) return { error: updateError.message }
 
-    // Notify student
-    await supabase.from('notifications').insert({
+    // Use admin client for notifications
+    const supabaseAdmin = createAdminClient()
+    await supabaseAdmin.from('notifications').insert({
         user_id: sheet.student_id,
         type: 'COUNSELOR_APPROVED',
         title: 'Lembar Ketuntasan Disetujui!',
@@ -288,7 +294,8 @@ export async function rejectAsCounselor(sheetId: string, reason: string) {
     if (error) return { error: error.message }
 
     // Notify student
-    await supabase.from('notifications').insert({
+    const supabaseAdmin = createAdminClient()
+    await supabaseAdmin.from('notifications').insert({
         user_id: sheet.student_id,
         type: 'COUNSELOR_REJECTED',
         title: 'Lembar Ketuntasan Ditolak',
