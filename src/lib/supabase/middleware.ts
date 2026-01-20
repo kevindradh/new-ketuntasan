@@ -41,11 +41,59 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
-    // If user is logged in and trying to access auth pages, redirect to dashboard
-    if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/admin'
-        return NextResponse.redirect(url)
+    // RBAC: Role-Based Access Control
+    if (user) {
+        // 1. Fetch user roles
+        const { data: roles } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+
+        const userRoles = roles?.map(r => r.role) || []
+
+        // 2. Define Route Permissions
+        const routePermissions: Record<string, string[]> = {
+            '/admin': ['ADMIN'],
+            '/teacher': ['TEACHER'],
+            '/homeroom': ['HOMEROOM'],
+            '/counselor': ['COUNSELOR'],
+            '/student': ['STUDENT'],
+        }
+
+        // 3. Determine user's primary dashboard (for redirects)
+        const rolePriority = ['ADMIN', 'TEACHER', 'HOMEROOM', 'COUNSELOR', 'STUDENT']
+        let primaryDashboard = '/login' // Default fallback
+
+        for (const role of rolePriority) {
+            if (userRoles.includes(role)) {
+                if (role === 'ADMIN') primaryDashboard = '/admin'
+                else if (role === 'TEACHER') primaryDashboard = '/teacher'
+                else if (role === 'HOMEROOM') primaryDashboard = '/homeroom'
+                else if (role === 'COUNSELOR') primaryDashboard = '/counselor'
+                else if (role === 'STUDENT') primaryDashboard = '/student'
+                break
+            }
+        }
+
+        // 4. Redirect if accessing Auth pages while logged in
+        if (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register') {
+            const url = request.nextUrl.clone()
+            url.pathname = primaryDashboard
+            return NextResponse.redirect(url)
+        }
+
+        // 5. Check permissions for protected routes
+        for (const [routePrefix, allowedRoles] of Object.entries(routePermissions)) {
+            if (request.nextUrl.pathname.startsWith(routePrefix)) {
+                const hasAccess = userRoles.some(role => allowedRoles.includes(role))
+                if (!hasAccess) {
+                    console.warn(`Unauthorized access attempt by ${user.email} to ${request.nextUrl.pathname}. Redirecting to ${primaryDashboard}`)
+                    const url = request.nextUrl.clone()
+                    url.pathname = primaryDashboard
+                    return NextResponse.redirect(url)
+                }
+            }
+        }
     }
 
     return supabaseResponse
