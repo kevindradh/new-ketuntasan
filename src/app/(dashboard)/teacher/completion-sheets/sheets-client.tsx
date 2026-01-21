@@ -17,13 +17,6 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog'
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
-import {
     Table,
     TableBody,
     TableCell,
@@ -287,7 +280,6 @@ export function CompletionSheetsClient({
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
 
-
                     <Button
                         variant="ghost"
                         className="pl-0 hover:pl-2 transition-all mb-1 text-slate-500 hover:text-slate-900"
@@ -296,60 +288,9 @@ export function CompletionSheetsClient({
                         <ChevronLeft className="h-4 w-4 mr-1" />
                         Kembali ke Daftar Kelas
                     </Button>
-                    <div className="flex flex-col sm:flex-row gap-4 mt-2">
-                        {/* Class Filter */}
-                        <div className="w-[200px]">
-                            <Select
-                                value={currentAssignment?.class_id}
-                                onValueChange={(value) => {
-                                    const params = new URLSearchParams(searchParams)
-                                    params.set('class_id', value)
-                                    router.push(`${pathname}?${params.toString()}`)
-                                }}
-                            >
-                                <SelectTrigger className="bg-white">
-                                    <SelectValue placeholder="Pilih Kelas" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {/* Get unique classes from assignments */}
-                                    {Array.from(new Set(assignments.map(a => a.class_id))).map(classId => {
-                                        const assignment = assignments.find(a => a.class_id === classId)
-                                        return (
-                                            <SelectItem key={classId} value={classId}>
-                                                {assignment?.class?.name || 'Unknown Class'}
-                                            </SelectItem>
-                                        )
-                                    })}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        {/* Subject Filter */}
-                        <div className="w-[250px]">
-                            <Select
-                                value={currentAssignment?.subject_id}
-                                onValueChange={(value) => {
-                                    const params = new URLSearchParams(searchParams)
-                                    params.set('subject_id', value)
-                                    router.push(`${pathname}?${params.toString()}`)
-                                }}
-                            >
-                                <SelectTrigger className="bg-white">
-                                    <SelectValue placeholder="Pilih Mapel" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {/* Get unique subjects from assignments */}
-                                    {Array.from(new Set(assignments.map(a => a.subject_id))).map(subjectId => {
-                                        const assignment = assignments.find(a => a.subject_id === subjectId)
-                                        return (
-                                            <SelectItem key={subjectId} value={subjectId}>
-                                                {assignment?.subject?.name || 'Unknown Subject'}
-                                            </SelectItem>
-                                        )
-                                    })}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
+                    <h1 className="text-2xl font-bold text-slate-900 line-clamp-1">
+                        {activeStatsAssignment?.class?.name} - {activeStatsAssignment?.subject?.name}
+                    </h1>
                 </div>
 
                 <div className="flex items-center gap-3">
