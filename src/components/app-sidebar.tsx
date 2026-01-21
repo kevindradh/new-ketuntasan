@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Eye,
   TrendingUp,
+  CalendarRange,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
@@ -107,6 +108,11 @@ const roleMenus: Record<UserRole, { title: string; url: string; icon: React.Elem
       title: "Kenaikan Kelas",
       url: "/admin/promotions",
       icon: TrendingUp,
+    },
+    {
+      title: "Tahun Ajaran",
+      url: "/admin/academic-years",
+      icon: CalendarRange,
     },
   ],
   TEACHER: [

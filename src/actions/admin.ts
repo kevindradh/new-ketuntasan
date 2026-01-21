@@ -821,3 +821,83 @@ export async function graduateStudents(studentIds: string[]) {
     return { success: true, count: studentIds.length }
 }
 
+// ========== ACADEMIC YEAR MANAGEMENT ==========
+export async function getAcademicYears() {
+    const supabase = await createClient()
+
+    // Get unique academic years from classes
+    const { data, error } = await supabase
+        .from('classes')
+        .select('academic_year, is_active')
+        .order('academic_year', { ascending: false })
+
+    if (error) return []
+
+    // Group by year and determine if ANY class in that year is active
+    // If even one class is active, we consider the year "Active" (or at least partially)
+    // But ideally, "Archived" means ALL classes are inactive.
+
+    const yearMap = new Map<string, { year: string, isActive: boolean, classCount: number }>()
+
+    data.forEach(item => {
+        const stats = yearMap.get(item.academic_year) || { year: item.academic_year, isActive: false, classCount: 0 }
+        stats.classCount++
+        if (item.is_active) stats.isActive = true
+        yearMap.set(item.academic_year, stats)
+    })
+
+    return Array.from(yearMap.values())
+}
+
+export async function archiveAcademicYear(year: string) {
+    const supabaseAdmin = createAdminClient()
+
+    // 1. Archive Classes
+    const { error: classError } = await supabaseAdmin
+        .from('classes')
+        .update({ is_active: false })
+        .eq('academic_year', year)
+
+    if (classError) return { error: `Gagal mengarsipkan kelas: ${classError.message}` }
+
+    // 2. Archive Teacher Assignments
+    const { error: assignError } = await supabaseAdmin
+        .from('teacher_assignments')
+        .update({ is_active: false })
+        .eq('academic_year', year)
+
+    if (assignError) return { error: `Gagal mengarsipkan tugas guru: ${assignError.message}` }
+
+    revalidatePath('/admin/academic-years')
+    revalidatePath('/admin/classes')
+    revalidatePath('/admin/teachers')
+
+    return { success: true }
+}
+
+export async function activateAcademicYear(year: string) {
+    const supabaseAdmin = createAdminClient()
+
+    // 1. Activate Classes
+    const { error: classError } = await supabaseAdmin
+        .from('classes')
+        .update({ is_active: true })
+        .eq('academic_year', year)
+
+    if (classError) return { error: `Gagal mengaktifkan kelas: ${classError.message}` }
+
+    // 2. Activate Teacher Assignments
+    const { error: assignError } = await supabaseAdmin
+        .from('teacher_assignments')
+        .update({ is_active: true })
+        .eq('academic_year', year)
+
+    if (assignError) return { error: `Gagal mengaktifkan tugas guru: ${assignError.message}` }
+
+    revalidatePath('/admin/academic-years')
+    revalidatePath('/admin/classes')
+    revalidatePath('/admin/teachers')
+
+    return { success: true }
+}
+
