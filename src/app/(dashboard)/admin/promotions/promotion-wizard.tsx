@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from "sonner"
-import { Loader2, ArrowRight, CheckCircle2, Users, AlertCircle, ChevronsUpDown, Check } from "lucide-react"
+import { Loader2, ArrowRight, CheckCircle2, Users, AlertCircle, ChevronsUpDown, Check, GraduationCap } from "lucide-react"
 import { getStudentsByClass, promoteStudents } from "@/actions/admin"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
@@ -158,7 +158,7 @@ export function PromotionWizard({ classes }: { classes: Class[] }) {
 
         setLoading(true)
         try {
-            const res = await promoteStudents(selectedStudentIds, targetClassId)
+            const res = await promoteStudents(selectedStudentIds, targetClassId, sourceClassId)
             if (res.error) {
                 toast.error(res.error)
             } else if (res.message) {
@@ -183,11 +183,15 @@ export function PromotionWizard({ classes }: { classes: Class[] }) {
         }
     }
 
-    // NEW LOGIC START
+    // NEW LOGIC: DETECT GRADUATION MODE
+    const sourceClass = classes.find(c => c.id === sourceClassId)
+    // Assumption: Grade 12 or higher is final year.
+    // Or simpler: check if there are any valid target classes. If not, and it's high grade, suggest graduation.
+    // User requested "misal kelas 12". Let's stick to Grade >= 12.
+    const isFinalYear = sourceClass ? sourceClass.grade_level >= 12 : false
+
     // Helper to parse academic year start (e.g., "2023/2024" -> 2023)
     const getYearStart = (ay: string) => parseInt(ay.split('/')[0])
-
-    const sourceClass = classes.find(c => c.id === sourceClassId)
 
     // Filter target classes based on validation rules
     const targetClasses = classes.filter(c => {
@@ -209,7 +213,49 @@ export function PromotionWizard({ classes }: { classes: Class[] }) {
     })
 
     const canPromote = targetClassId && selectedStudentIds.length > 0 && sourceClass && targetClasses.some(tc => tc.id === targetClassId)
-    // NEW LOGIC END
+    const canGraduate = isFinalYear && selectedStudentIds.length > 0 && sourceClass
+
+
+
+    // We need separate handlers because data shape differs slightly, or unify them.
+    // Let's create a unified handleProcess.
+
+    const handleProcess = async () => {
+        if (!sourceClass) return
+
+        if (isFinalYear) {
+            // GRADUATION FLOW
+            if (selectedStudentIds.length === 0) return toast.error("Pilih minimal 1 siswa")
+            if (!confirm(`Konfirmasi Kelulusan: Apakah Anda yakin ingin meluluskan ${selectedStudentIds.length} siswa dari ${sourceClass.name}? Status mereka akan berubah menjadi GRADUATED.`)) return
+
+            setLoading(true)
+            try {
+                // Import this from actions! We need to make sure we import graduateStudents
+                const { graduateStudents } = await import("@/actions/admin")
+                const res = await graduateStudents(selectedStudentIds)
+
+                if (res.error) {
+                    toast.error(res.error)
+                } else {
+                    toast.success(`Berhasil meluluskan ${res.count} siswa!`)
+                    router.refresh()
+                    setSourceClassId("")
+                    setTargetClassId("")
+                    setStudents([])
+                    setSelectedStudentIds([])
+                }
+            } catch (err: any) {
+                toast.error(err.message)
+            } finally {
+                setLoading(false)
+            }
+
+        } else {
+            // PROMOTION FLOW
+            handlePromote()
+        }
+    }
+
 
     return (
         <div className="p-6 lg:p-8 space-y-6">
@@ -311,80 +357,143 @@ export function PromotionWizard({ classes }: { classes: Class[] }) {
 
                 {/* TARGET COLUMN */}
                 <div className="space-y-6">
-                    <Card className={`border-slate-200 shadow-sm transition-all duration-300 ${!sourceClassId ? 'opacity-75' : ''}`}>
-                        <CardHeader className="pb-4">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">2</span>
-                                Kelas Tujuan
-                            </CardTitle>
-                            <CardDescription>Pilih kelas tujuan untuk siswa terpilih.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Pilih Kelas</label>
-                                <ClassCombobox
-                                    value={targetClassId}
-                                    onChange={setTargetClassId}
-                                    classes={targetClasses}
-                                    placeholder="Cari kelas tujuan..."
-                                    disabled={!sourceClassId}
-                                />
-                                {sourceClassId && targetClasses.length === 0 && (
-                                    <p className="text-xs text-red-500 mt-2">
-                                        Tidak ada kelas tujuan yang memenuhi syarat (Jurusan sama, Tingkat lebih tinggi, Tahun Ajaran lebih baru).
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Info Alert */}
-                            <Alert className="bg-blue-50 border-blue-200">
-                                <AlertCircle className="h-4 w-4 text-blue-600" />
-                                <AlertTitle className="text-blue-800 ml-2">Informasi</AlertTitle>
-                                <AlertDescription className="text-blue-700 ml-2 text-xs leading-relaxed mt-1">
-                                    Data siswa di kelas lama <b>tidak akan dihapus</b> untuk keperluan arsip riwayat kelas. Siswa akan tercatat aktif di kelas baru.
-                                </AlertDescription>
-                            </Alert>
-
-                            {/* Summary Box */}
-                            {canPromote && (
-                                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
-                                    <h4 className="text-sm font-semibold text-slate-900 flex items-center">
-                                        <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" />
-                                        Konfirmasi
-                                    </h4>
-                                    <div className="grid grid-cols-2 gap-2 text-sm">
-                                        <div className="text-slate-500">Jumlah Siswa:</div>
-                                        <div className="font-medium text-slate-900 text-right">{selectedStudentIds.length}</div>
-                                        <div className="text-slate-500">Dari:</div>
-                                        <div className="font-medium text-slate-900 text-right">{classes.find(c => c.id === sourceClassId)?.name}</div>
-                                        <div className="text-slate-500">Ke:</div>
-                                        <div className="font-medium text-blue-600 text-right">
-                                            {classes.find(c => c.id === targetClassId)?.name}
-                                            <span className="text-xs font-normal text-slate-500 ml-1">({classes.find(c => c.id === targetClassId)?.academic_year})</span>
+                    {isFinalYear ? (
+                        /* GRADUATION CARD */
+                        <Card className="border-blue-200 shadow-sm bg-blue-50/50 h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-lg flex items-center gap-2 text-blue-800">
+                                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">2</span>
+                                    Konfirmasi Kelulusan
+                                </CardTitle>
+                                <CardDescription className="text-blue-600/80">
+                                    Kelas ini adalah tingkat akhir. Siswa akan diluluskan.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="p-4 bg-white rounded-lg border border-blue-100 shadow-sm">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="p-2 bg-blue-100 rounded-full">
+                                            <GraduationCap className="h-5 w-5 text-blue-600" />
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-slate-900">Status akan berubah: GRADUATED</p>
+                                            <p className="text-xs text-slate-500">Siswa tidak akan aktif lagi di kelas manapun.</p>
                                         </div>
                                     </div>
                                 </div>
-                            )}
 
-                            <Button
-                                className="w-full gradient-primary"
-                                disabled={loading || !canPromote}
-                                onClick={handlePromote}
-                            >
-                                {loading ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                        Memproses...
-                                    </>
-                                ) : (
-                                    <>
-                                        <ArrowRight className="h-4 w-4 mr-2" />
-                                        Proses Kenaikan Kelas
-                                    </>
+                                {/* Summary Box */}
+                                {selectedStudentIds.length > 0 && (
+                                    <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+                                        <h4 className="text-sm font-semibold text-slate-900 flex items-center">
+                                            <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" />
+                                            Konfirmasi
+                                        </h4>
+                                        <div className="grid grid-cols-2 gap-2 text-sm">
+                                            <div className="text-slate-500">Jumlah Siswa:</div>
+                                            <div className="font-medium text-slate-900 text-right">{selectedStudentIds.length}</div>
+                                            <div className="text-slate-500">Asal:</div>
+                                            <div className="font-medium text-slate-900 text-right">{sourceClass?.name}</div>
+                                        </div>
+                                    </div>
                                 )}
-                            </Button>
-                        </CardContent>
-                    </Card>
+
+                                <Button
+                                    className="w-full gradient-primary shadow-lg hover:shadow-blue-200 transition-all"
+                                    disabled={loading || selectedStudentIds.length === 0}
+                                    onClick={handleProcess}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                            Memproses...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                                            Luluskan {selectedStudentIds.length > 0 ? selectedStudentIds.length : ''} Siswa
+                                        </>
+                                    )}
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        /* PROMOTION CARD */
+                        <Card className={`border-slate-200 shadow-sm transition-all duration-300 ${!sourceClassId ? 'opacity-75' : ''}`}>
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">2</span>
+                                    Kelas Tujuan
+                                </CardTitle>
+                                <CardDescription>Pilih kelas tujuan untuk siswa terpilih.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Pilih Kelas</label>
+                                    <ClassCombobox
+                                        value={targetClassId}
+                                        onChange={setTargetClassId}
+                                        classes={targetClasses}
+                                        placeholder="Cari kelas tujuan..."
+                                        disabled={!sourceClassId}
+                                    />
+                                    {sourceClassId && targetClasses.length === 0 && (
+                                        <p className="text-xs text-red-500 mt-2">
+                                            Tidak ada kelas tujuan yang memenuhi syarat (Jurusan sama, Tingkat lebih tinggi, Tahun Ajaran lebih baru).
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Info Alert */}
+                                <Alert className="bg-blue-50 border-blue-200">
+                                    <AlertCircle className="h-4 w-4 text-blue-600" />
+                                    <AlertTitle className="text-blue-800 ml-2">Informasi</AlertTitle>
+                                    <AlertDescription className="text-blue-700 ml-2 text-xs leading-relaxed mt-1">
+                                        Data siswa di kelas lama <b>tidak akan dihapus</b> untuk keperluan arsip riwayat kelas. Siswa akan tercatat aktif di kelas baru.
+                                    </AlertDescription>
+                                </Alert>
+
+                                {/* Summary Box */}
+                                {canPromote && (
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+                                        <h4 className="text-sm font-semibold text-slate-900 flex items-center">
+                                            <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" />
+                                            Konfirmasi
+                                        </h4>
+                                        <div className="grid grid-cols-2 gap-2 text-sm">
+                                            <div className="text-slate-500">Jumlah Siswa:</div>
+                                            <div className="font-medium text-slate-900 text-right">{selectedStudentIds.length}</div>
+                                            <div className="text-slate-500">Dari:</div>
+                                            <div className="font-medium text-slate-900 text-right">{classes.find(c => c.id === sourceClassId)?.name}</div>
+                                            <div className="text-slate-500">Ke:</div>
+                                            <div className="font-medium text-blue-600 text-right">
+                                                {classes.find(c => c.id === targetClassId)?.name}
+                                                <span className="text-xs font-normal text-slate-500 ml-1">({classes.find(c => c.id === targetClassId)?.academic_year})</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <Button
+                                    className="w-full gradient-primary"
+                                    disabled={loading || !canPromote}
+                                    onClick={handleProcess}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                            Memproses...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <ArrowRight className="h-4 w-4 mr-2" />
+                                            Proses Kenaikan Kelas
+                                        </>
+                                    )}
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             </div>
         </div>

@@ -704,24 +704,27 @@ export async function getStudentsByClass(classId: string) {
     return students.map((s: any) => s.student).sort((a: any, b: any) => a.full_name.localeCompare(b.full_name))
 }
 
-export async function promoteStudents(studentIds: string[], targetClassId: string) {
+export async function promoteStudents(studentIds: string[], targetClassId: string, sourceClassId: string) {
     const supabaseAdmin = createAdminClient()
 
     if (!studentIds.length) return { error: 'Tidak ada siswa yang dipilih' }
     if (!targetClassId) return { error: 'Kelas tujuan harus dipilih' }
+    if (!sourceClassId) return { error: 'Kelas asal harus dipilih' }
 
     // 0. Validation: Fetch Class Details
     const { data: targetClass } = await supabaseAdmin.from('classes').select('grade_level, major, academic_year').eq('id', targetClassId).single()
 
-    // We need the source class. We can get it from the *current* enrollment of the first student.
-    // Assuming all selected students are from the same source class (which UI ensures).
-    const { data: firstStudentEnrollment } = await supabaseAdmin.from('class_students').select('class_id, class:classes(grade_level, major, academic_year)').eq('student_id', studentIds[0]).single()
+    // We need the source class. We can now be precise using sourceClassId.
+    const { data: firstStudentEnrollment } = await supabaseAdmin
+        .from('class_students')
+        .select('class_id, class:classes(grade_level, major, academic_year)')
+        .eq('student_id', studentIds[0])
+        .eq('class_id', sourceClassId)
+        .single()
 
     if (!targetClass) return { error: 'Kelas tujuan tidak valid' }
     if (!firstStudentEnrollment || !firstStudentEnrollment.class) {
-        // Technically possible if student has no class, but promotion implies moving FROM a class.
-        // If "new student" assignment, use addStudentToClass instead.
-        return { error: 'Data kelas asal tidak ditemukan' }
+        return { error: 'Data kelas asal tidak ditemukan. Pastikan siswa terdaftar di kelas asal.' }
     }
 
     const rawClass = firstStudentEnrollment.class
@@ -799,3 +802,22 @@ export async function toggleCounselorRole(userId: string, isCounselor: boolean) 
     revalidatePath('/admin/teachers')
     return { success: true }
 }
+
+// ========== GRADUATION ==========
+export async function graduateStudents(studentIds: string[]) {
+    const supabaseAdmin = createAdminClient()
+
+    if (!studentIds.length) return { error: 'Tidak ada siswa yang dipilih' }
+
+    const { error } = await supabaseAdmin
+        .from('profiles')
+        .update({ status: 'GRADUATED' })
+        .in('id', studentIds)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/students')
+    revalidatePath('/admin/classes')
+    return { success: true, count: studentIds.length }
+}
+
