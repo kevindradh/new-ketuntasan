@@ -18,6 +18,9 @@ import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from "@tanstack/react-table"
 import { Progress } from '@/components/ui/progress'
 
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
 interface MonitoringClientProps {
     items: (CompletionSheet & {
         student?: Profile
@@ -28,6 +31,8 @@ interface MonitoringClientProps {
     pageCount: number
     currentPage: number
     totalItems: number
+    availableClasses?: { id: string, name: string, academic_year: string }[]
+    availableYears?: string[]
 }
 
 const statusLabels: Record<string, string> = {
@@ -46,8 +51,35 @@ const statusColors: Record<string, string> = {
     'APPROVED': 'bg-green-100 text-green-700',
 }
 
-export function MonitoringClient({ items, pageCount, currentPage, totalItems }: MonitoringClientProps) {
+export function MonitoringClient({ items, pageCount, currentPage, totalItems, availableClasses = [], availableYears = [] }: MonitoringClientProps) {
     const [selectedSheet, setSelectedSheet] = useState<typeof items[0] | null>(null)
+    const router = useRouter()
+    const searchParams = useSearchParams()
+
+    const currentYear = searchParams.get('academic_year') || availableYears[0] || ''
+    const currentClass = searchParams.get('class_id') || ''
+
+    const handleYearChange = (year: string) => {
+        const params = new URLSearchParams(searchParams)
+        params.set('academic_year', year)
+        params.delete('class_id') // Reset class when year changes
+        params.set('page', '1') // Reset paging
+        router.push(`?${params.toString()}`)
+    }
+
+    const handleClassChange = (classId: string) => {
+        const params = new URLSearchParams(searchParams)
+        if (classId === 'all') {
+            params.delete('class_id')
+        } else {
+            params.set('class_id', classId)
+        }
+        params.set('page', '1')
+        router.push(`?${params.toString()}`)
+    }
+
+    // Filter classes based on selected year
+    const filteredClasses = availableClasses.filter(c => c.academic_year === currentYear)
 
     const columns: ColumnDef<typeof items[0]>[] = [
         {
@@ -120,9 +152,37 @@ export function MonitoringClient({ items, pageCount, currentPage, totalItems }: 
 
     return (
         <div className="p-6 lg:p-8 space-y-6">
-            <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Monitoring Ketuntasan</h1>
-                <p className="text-slate-500 mt-1">Pantau progress ketuntasan semua siswa</p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Monitoring Ketuntasan</h1>
+                    <p className="text-slate-500 mt-1">Pantau progress ketuntasan semua siswa</p>
+                </div>
+
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <Select value={currentYear} onValueChange={handleYearChange}>
+                        <SelectTrigger className="w-[180px] bg-white">
+                            <SelectValue placeholder="Pilih Tahun Ajaran" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableYears.map(year => (
+                                <SelectItem key={year} value={year}>{year}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <Select value={currentClass || 'all'} onValueChange={handleClassChange} disabled={!currentYear}>
+                        <SelectTrigger className="w-[180px] bg-white">
+                            <SelectValue placeholder="Semua Kelas" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua Kelas</SelectItem>
+                            {filteredClasses.map(c => (
+                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
 
             <DataTable
@@ -131,7 +191,7 @@ export function MonitoringClient({ items, pageCount, currentPage, totalItems }: 
                 pageCount={pageCount}
                 currentPage={currentPage}
                 totalItems={totalItems}
-                searchPlaceholder="Cari siswa atau kelas..."
+                searchPlaceholder="Cari siswa..."
             />
 
             {/* Detail Dialog */}
