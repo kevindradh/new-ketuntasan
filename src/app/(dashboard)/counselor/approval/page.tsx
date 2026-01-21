@@ -107,17 +107,11 @@ export default async function CounselorApprovalPage({
     const from = (currentPage - 1) * pageSize
     const to = from + pageSize - 1
 
-    // UX: Force class selection. If "all" (default), show empty list.
-    let sheets: any[] = []
-    let count = 0
-
-    if (classId !== 'all') {
-        const result = await dbQuery
-            .order('updated_at', { ascending: false })
-            .range(from, to)
-        sheets = result.data || []
-        count = result.count || 0
-    }
+    const result = await dbQuery
+        .order('updated_at', { ascending: false })
+        .range(from, to)
+    const sheets = result.data || []
+    const count = result.count || 0
 
     const totalItems = count || 0
     const pageCount = Math.ceil(totalItems / pageSize)
