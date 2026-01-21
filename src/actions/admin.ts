@@ -192,8 +192,11 @@ export async function deleteExam(id: string) {
 // ========== GENERATE COMPLETION SHEETS ==========
 export async function generateCompletionSheets(examId: string, classIds: string[]) {
     const supabase = await createClient()
+    // Use admin client for notifications to bypass RLS if needed, though standard client might work if table policies allow
+    // Ideally we use the same client for consistency unless necessary. 
+    // Optimization: Bulk operations.
 
-    // Get exam details
+    // 1. Get exam details
     const { data: exam, error: examError } = await supabase
         .from('exams')
         .select('*')
@@ -202,66 +205,111 @@ export async function generateCompletionSheets(examId: string, classIds: string[
 
     if (examError || !exam) return { error: 'Ujian tidak ditemukan' }
 
-    let totalCreated = 0
+    // 2. Fetch all students from all selected classes
+    const { data: students, error: studentsError } = await supabase
+        .from('class_students')
+        .select('student_id, class_id')
+        .in('class_id', classIds)
 
-    for (const classId of classIds) {
-        // Get class details
-        const { data: classData } = await supabase
-            .from('classes')
-            .select('*, class_students(student_id)')
-            .eq('id', classId)
-            .single()
+    if (studentsError) return { error: 'Gagal mengambil data siswa: ' + studentsError.message }
+    if (!students || students.length === 0) return { success: true, totalCreated: 0 }
 
-        if (!classData) continue
+    // 3. Check existing sheets for these students to avoid duplicates
+    const studentIds = students.map(s => s.student_id)
+    const { data: existingSheets } = await supabase
+        .from('completion_sheets')
+        .select('student_id')
+        .eq('exam_id', examId)
+        .in('student_id', studentIds)
 
-        // Create completion sheet for each student
-        for (const enrollment of classData.class_students || []) {
-            // Check if sheet already exists
-            const { data: existing } = await supabase
-                .from('completion_sheets')
-                .select('id')
-                .eq('exam_id', examId)
-                .eq('student_id', enrollment.student_id)
-                .single()
+    const existingStudentIds = new Set(existingSheets?.map(s => s.student_id))
 
-            if (existing) continue
+    // Filter students who don't have a sheet yet
+    const studentsToProcess = students.filter(s => !existingStudentIds.has(s.student_id))
 
-            // Create completion sheet
-            const { data: sheet, error: sheetError } = await supabase
-                .from('completion_sheets')
-                .insert({
-                    exam_id: examId,
-                    student_id: enrollment.student_id,
-                    class_id: classId,
-                    status: 'IN_PROGRESS',
+    if (studentsToProcess.length === 0) return { success: true, totalCreated: 0 }
+
+    // 4. Bulk Insert Sheets
+    const sheetsToInsert = studentsToProcess.map(s => ({
+        exam_id: examId,
+        student_id: s.student_id,
+        class_id: s.class_id,
+        status: 'IN_PROGRESS',
+    }))
+
+    const { data: createdSheets, error: insertSheetError } = await supabase
+        .from('completion_sheets')
+        .insert(sheetsToInsert)
+        .select('id, student_id, class_id')
+
+    if (insertSheetError) return { error: 'Gagal membuat lembar ketuntasan: ' + insertSheetError.message }
+    if (!createdSheets) return { success: true, totalCreated: 0 }
+
+    // 5. Bulk Generate Items (Manual logic instead of RPC per row)
+    // First, fetch teacher assignments for the relevant classes
+    const relevantClassIds = [...new Set(sheetsToInsert.map(s => s.class_id))]
+    const { data: assignments } = await supabase
+        .from('teacher_assignments')
+        .select('class_id, subject_id, teacher_id')
+        .in('class_id', relevantClassIds)
+        .eq('academic_year', exam.academic_year)
+
+    if (assignments && assignments.length > 0) {
+        // Group assignments by class
+        const assignmentsByClass: Record<string, typeof assignments> = {}
+        assignments.forEach(a => {
+            if (!assignmentsByClass[a.class_id]) assignmentsByClass[a.class_id] = []
+            assignmentsByClass[a.class_id].push(a)
+        })
+
+        // Prepare items
+        const itemsToInsert: any[] = []
+        createdSheets.forEach(sheet => {
+            const classAssignments = assignmentsByClass[sheet.class_id] || []
+            classAssignments.forEach(assign => {
+                itemsToInsert.push({
+                    completion_sheet_id: sheet.id,
+                    teacher_id: assign.teacher_id,
+                    subject_id: assign.subject_id,
+                    is_completed: false
                 })
-                .select()
-                .single()
-
-            if (sheetError || !sheet) continue
-
-            // Generate completion items
-            await supabase.rpc('generate_completion_items', {
-                p_completion_sheet_id: sheet.id,
-                p_class_id: classId,
-                p_academic_year: exam.academic_year,
             })
+        })
 
-            // Notify student
-            await supabase.from('notifications').insert({
-                user_id: enrollment.student_id,
-                type: 'SHEET_CREATED',
-                title: 'Lembar Ketuntasan Dibuat',
-                message: `Lembar ketuntasan untuk ${exam.name} telah dibuat. Silakan pantau progress Anda.`,
-                metadata: { completion_sheet_id: sheet.id, exam_id: examId },
-            })
+        // Insert Items in batches (Supabase has limit on request size, usually safe for ~1000 items, but let's be safe)
+        if (itemsToInsert.length > 0) {
+            const BATCH_SIZE = 1000
+            for (let i = 0; i < itemsToInsert.length; i += BATCH_SIZE) {
+                const batch = itemsToInsert.slice(i, i + BATCH_SIZE)
+                const { error: itemError } = await supabase
+                    .from('completion_items')
+                    .insert(batch)
 
-            totalCreated++
+                if (itemError) console.error("Error inserting items batch:", itemError)
+            }
+        }
+    }
+
+    // 6. Bulk Notifications
+    const supabaseAdmin = createAdminClient() // Use admin for notifications
+    const notificationsToInsert = createdSheets.map(sheet => ({
+        user_id: sheet.student_id,
+        type: 'SHEET_CREATED',
+        title: 'Lembar Ketuntasan Dibuat',
+        message: `Lembar ketuntasan untuk ${exam.name} telah dibuat. Silakan pantau progress Anda.`,
+        metadata: { completion_sheet_id: sheet.id, exam_id: examId },
+    }))
+
+    if (notificationsToInsert.length > 0) {
+        const BATCH_SIZE = 1000
+        for (let i = 0; i < notificationsToInsert.length; i += BATCH_SIZE) {
+            const batch = notificationsToInsert.slice(i, i + BATCH_SIZE)
+            await supabaseAdmin.from('notifications').insert(batch)
         }
     }
 
     revalidatePath('/admin/exams')
-    return { success: true, totalCreated }
+    return { success: true, totalCreated: createdSheets.length }
 }
 
 // ========== CLASS STUDENTS ==========
