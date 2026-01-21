@@ -23,27 +23,11 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import {
-    UserCheck, Search, Eye, Loader2, CheckCircle2, XCircle,
-    Clock, AlertCircle, BarChart3, ArrowRight, Wallet
-} from 'lucide-react'
+import { UserCheck, Search, Eye, Loader2, CheckCircle2, XCircle, Clock, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { approveAsHomeroom, rejectAsHomeroom } from '@/actions/completion'
 import { formatDate } from '@/lib/utils'
 import type { CompletionSheet, CompletionItem, Subject, Profile } from '@/types/database'
-import Link from 'next/link'
-import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    Cell,
-    PieChart,
-    Pie
-} from 'recharts'
 
 interface HomeroomDashboardClientProps {
     sheets: (CompletionSheet & {
@@ -59,15 +43,6 @@ interface HomeroomDashboardClientProps {
     }
 }
 
-const COLORS = {
-    'PENDING': '#94a3b8', // Slate 400
-    'IN_PROGRESS': '#3b82f6', // Blue 500
-    'HOMEROOM_REVIEW': '#f59e0b', // Amber 500
-    'COUNSELOR_REVIEW': '#8b5cf6', // Violet 500
-    'APPROVED': '#10b981', // Emerald 500
-    'REJECTED': '#ef4444', // Red 500
-}
-
 export function HomeroomDashboardClient({ sheets, stats }: HomeroomDashboardClientProps) {
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedSheet, setSelectedSheet] = useState<typeof sheets[0] | null>(null)
@@ -80,15 +55,6 @@ export function HomeroomDashboardClient({ sheets, stats }: HomeroomDashboardClie
         s.student?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.class?.name?.toLowerCase().includes(searchQuery.toLowerCase())
     )
-
-    // Calculate Chart Data (Status Distribution of ALL sheets, not just the pending approval ones)
-    // Note: 'sheets' prop currently contains ONLY 'HOMEROOM_REVIEW' status sheets based on page.tsx logic
-    // But 'stats' prop contains counts for ALL statuses. We'll visualize the 'stats' prop.
-    const statusData = [
-        { name: 'Belum Mulai', value: stats.inProgress, color: COLORS.PENDING }, // Using inProgress bucket for simplicity
-        { name: 'Menunggu', value: stats.pending, color: COLORS.HOMEROOM_REVIEW },
-        { name: 'Selesai', value: stats.approved, color: COLORS.APPROVED }
-    ]
 
     const handleApprove = async () => {
         if (!selectedSheet) return
@@ -135,183 +101,48 @@ export function HomeroomDashboardClient({ sheets, stats }: HomeroomDashboardClie
 
     return (
         <div className="p-6 lg:p-8 space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Dashboard Wali Kelas</h1>
-                    <p className="text-slate-500 mt-1">Ringkasan aktivitas dan approval siswa</p>
-                </div>
-                <Button asChild className="gradient-primary">
-                    <Link href="/homeroom/monitoring">
-                        Monitoring Kelas
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                </Button>
+            <div>
+                <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Dashboard Wali Kelas</h1>
+                <p className="text-slate-500 mt-1">Approval lembar ketuntasan siswa</p>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border-0 shadow-sm bg-white">
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-4">
+                <Card className="border-0 shadow-md">
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-slate-500">Menunggu Approval</p>
-                                <p className="text-3xl font-bold text-amber-600">{stats.pending}</p>
+                                <p className="text-2xl font-bold">{stats.pending}</p>
                             </div>
-                            <div className="p-3 bg-amber-50 rounded-xl">
-                                <Clock className="h-6 w-6 text-amber-600" />
-                            </div>
+                            <Clock className="h-8 w-8 text-amber-600" />
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="border-0 shadow-sm bg-white">
+                <Card className="border-0 shadow-md">
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-slate-500">Sudah Tuntas</p>
-                                <p className="text-3xl font-bold text-green-600">{stats.approved}</p>
+                                <p className="text-sm text-slate-500">Sudah Disetujui</p>
+                                <p className="text-2xl font-bold">{stats.approved}</p>
                             </div>
-                            <div className="p-3 bg-green-50 rounded-xl">
-                                <CheckCircle2 className="h-6 w-6 text-green-600" />
-                            </div>
+                            <CheckCircle2 className="h-8 w-8 text-green-600" />
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="border-0 shadow-sm bg-white">
+                <Card className="border-0 shadow-md">
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-slate-500">Dalam Proses</p>
-                                <p className="text-3xl font-bold text-blue-600">{stats.inProgress}</p>
+                                <p className="text-2xl font-bold">{stats.inProgress}</p>
                             </div>
-                            <div className="p-3 bg-blue-50 rounded-xl">
-                                <BarChart3 className="h-6 w-6 text-blue-600" />
-                            </div>
+                            <AlertCircle className="h-8 w-8 text-blue-600" />
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-6">
-                {/* Chart Section */}
-                <Card className="border-0 shadow-sm bg-white lg:col-span-1">
-                    <CardHeader>
-                        <CardTitle>Status Ketuntasan</CardTitle>
-                        <CardDescription>Visualisasi progress seluruh siswa</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="h-[250px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={statusData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                                    <XAxis type="number" hide />
-                                    <YAxis
-                                        dataKey="name"
-                                        type="category"
-                                        axisLine={false}
-                                        tickLine={false}
-                                        tick={{ fill: '#64748b', fontSize: 12 }}
-                                        width={80}
-                                    />
-                                    <Tooltip
-                                        cursor={{ fill: 'transparent' }}
-                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                    />
-                                    <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={32}>
-                                        {statusData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Main Approval Table */}
-                <Card className="border-0 shadow-sm bg-white lg:col-span-2">
-                    <CardHeader>
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div>
-                                <CardTitle>Menunggu Approval</CardTitle>
-                                <CardDescription>Daftar siswa yang memerlukan verifikasi Anda</CardDescription>
-                            </div>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                <Input
-                                    placeholder="Cari siswa..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-9 w-full sm:w-64"
-                                />
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Siswa</TableHead>
-                                    <TableHead>Kelas</TableHead>
-                                    <TableHead>Ujian</TableHead>
-                                    <TableHead>Ketuntasan</TableHead>
-                                    <TableHead className="text-right">Aksi</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredSheets.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="text-center py-12 text-slate-500">
-                                            <div className="flex flex-col items-center justify-center">
-                                                <div className="bg-slate-50 p-4 rounded-full mb-3">
-                                                    <CheckCircle2 className="h-8 w-8 text-green-500" />
-                                                </div>
-                                                <p className="font-medium text-slate-900">Semua Beres!</p>
-                                                <p className="text-sm">Tidak ada lembar ketuntasan yang perlu diapprove saat ini.</p>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    filteredSheets.map((sheet) => {
-                                        const totalItems = sheet.completion_items?.length || 0
-                                        const completedItems = sheet.completion_items?.filter(i => i.is_completed).length || 0
-
-                                        return (
-                                            <TableRow key={sheet.id}>
-                                                <TableCell>
-                                                    <div>
-                                                        <p className="font-medium">{sheet.student?.full_name}</p>
-                                                        <p className="text-xs text-slate-500">{sheet.student?.nisn}</p>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>{sheet.class?.name}</TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline">{sheet.exam?.name}</Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <span className="text-green-600 font-medium">{completedItems}/{totalItems}</span> Mapel
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => setSelectedSheet(sheet)}
-                                                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                                    >
-                                                        <Eye className="h-4 w-4 mr-1" />
-                                                        Review
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        )
-                                    })
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Dialogs Reuse */}
             {/* Approve Dialog */}
             <Dialog open={approveDialog} onOpenChange={setApproveDialog}>
                 <DialogContent>
@@ -424,6 +255,83 @@ export function HomeroomDashboardClient({ sheets, stats }: HomeroomDashboardClie
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Sheets Table */}
+            <Card className="border-0 shadow-md">
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle className="text-lg">Menunggu Approval</CardTitle>
+                            <CardDescription>Lembar ketuntasan yang siap untuk direview</CardDescription>
+                        </div>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Input
+                                placeholder="Cari siswa..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-9 w-64"
+                            />
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Siswa</TableHead>
+                                <TableHead>Kelas</TableHead>
+                                <TableHead>Ujian</TableHead>
+                                <TableHead>Ketuntasan</TableHead>
+                                <TableHead className="text-right">Aksi</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredSheets.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                                        <UserCheck className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+                                        <p>Tidak ada lembar ketuntasan yang menunggu approval</p>
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                filteredSheets.map((sheet) => {
+                                    const totalItems = sheet.completion_items?.length || 0
+                                    const completedItems = sheet.completion_items?.filter(i => i.is_completed).length || 0
+
+                                    return (
+                                        <TableRow key={sheet.id}>
+                                            <TableCell>
+                                                <div>
+                                                    <p className="font-medium">{sheet.student?.full_name}</p>
+                                                    <p className="text-xs text-slate-500">{sheet.student?.nisn}</p>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>{sheet.class?.name}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline">{sheet.exam?.name}</Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="text-green-600 font-medium">{completedItems}/{totalItems}</span>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setSelectedSheet(sheet)}
+                                                >
+                                                    <Eye className="h-4 w-4 mr-1" />
+                                                    Review
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
         </div>
     )
 }
