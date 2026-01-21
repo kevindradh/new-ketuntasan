@@ -38,23 +38,34 @@ interface CounselorApprovalClientProps {
         completion_items?: (CompletionItem & { subject?: Subject; teacher?: Profile })[]
     })[]
     classes: { id: string; name: string }[]
+    availableYears?: string[]
     pageCount: number
     currentPage: number
     totalItems: number
 }
 
-export function CounselorApprovalClient({ items, classes, pageCount, currentPage, totalItems }: CounselorApprovalClientProps) {
+export function CounselorApprovalClient({ items, classes, availableYears = [], pageCount, currentPage, totalItems }: CounselorApprovalClientProps) {
     const router = useRouter()
     const searchParams = useSearchParams()
 
     // URL state for filter
     const currentClassId = searchParams.get('classId') || 'all'
+    const currentYear = searchParams.get('academic_year') || availableYears[0] || ''
 
     const [selectedSheet, setSelectedSheet] = useState<typeof items[0] | null>(null)
     const [approveDialog, setApproveDialog] = useState(false)
     const [rejectDialog, setRejectDialog] = useState(false)
     const [notes, setNotes] = useState('')
     const [loading, setLoading] = useState(false)
+
+    // Handle year change
+    const handleYearChange = (value: string) => {
+        const params = new URLSearchParams(searchParams.toString())
+        params.set('academic_year', value)
+        params.delete('classId') // Reset class when year changes
+        params.set('page', '1')
+        router.push(`?${params.toString()}`)
+    }
 
     // Handle class filter change
     const handleClassChange = (value: string) => {
@@ -174,23 +185,40 @@ export function CounselorApprovalClient({ items, classes, pageCount, currentPage
                     <p className="text-slate-500 mt-1">Verifikasi akhir lembar ketuntasan siswa</p>
                 </div>
 
-                {/* Class Selecor */}
-                <div className="w-full sm:w-[250px]">
-                    <Label className="text-xs text-slate-500 mb-1.5 block">Filter Kelas</Label>
-                    <Select value={currentClassId} onValueChange={handleClassChange}>
-                        <SelectTrigger className="w-full">
-                            <Filter className="w-4 h-4 mr-2 text-slate-400" />
-                            <SelectValue placeholder="Pilih Kelas" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Semua Kelas</SelectItem>
-                            {classes.map((c) => (
-                                <SelectItem key={c.id} value={c.id}>
-                                    {c.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="w-full sm:w-[200px]">
+                        <Label className="text-xs text-slate-500 mb-1.5 block">Tahun Ajaran</Label>
+                        <Select value={currentYear} onValueChange={handleYearChange}>
+                            <SelectTrigger className="w-full bg-white">
+                                <SelectValue placeholder="Pilih Tahun" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {availableYears.map((year) => (
+                                    <SelectItem key={year} value={year}>
+                                        {year}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="w-full sm:w-[250px]">
+                        <Label className="text-xs text-slate-500 mb-1.5 block">Filter Kelas</Label>
+                        <Select value={currentClassId} onValueChange={handleClassChange} disabled={!currentYear}>
+                            <SelectTrigger className="w-full bg-white">
+                                <Filter className="w-4 h-4 mr-2 text-slate-400" />
+                                <SelectValue placeholder="Pilih Kelas" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Semua Kelas</SelectItem>
+                                {classes.map((c) => (
+                                    <SelectItem key={c.id} value={c.id}>
+                                        {c.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </div>
 

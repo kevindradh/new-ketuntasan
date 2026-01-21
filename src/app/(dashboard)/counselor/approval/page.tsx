@@ -5,7 +5,7 @@ import { CounselorApprovalClient } from './counselor-approval-client'
 export default async function CounselorApprovalPage({
     searchParams,
 }: {
-    searchParams: Promise<{ page?: string, query?: string, classId?: string }>
+    searchParams: Promise<{ page?: string, query?: string, classId?: string, academic_year?: string }>
 }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -15,25 +15,33 @@ export default async function CounselorApprovalPage({
     const params = await searchParams
     const currentPage = Number(params?.page) || 1
     const query = params?.query || ''
+    const currentAcademicYear = params?.academic_year
     const classId = params?.classId || 'all'
     const pageSize = 10
 
     // Fetch Active Classes Assigned to Counselor
     const { data: classes } = await supabase
         .from('classes')
-        .select('id, name')
+        .select('id, name, academic_year')
         .eq('is_active', true)
         .eq('counselor_id', user.id) // Only assigned classes
+        .order('academic_year', { ascending: false })
         .order('name')
 
-    const assignedClassIds = classes?.map(c => c.id) || []
+    const availableYears = [...new Set(classes?.map(c => c.academic_year) || [])].sort().reverse()
+    const activeYear = currentAcademicYear || availableYears[0]
 
-    // If no classes assigned, show empty
-    if (assignedClassIds.length === 0) {
+    // Filter classes by active year
+    const activeClasses = classes?.filter(c => c.academic_year === activeYear) || []
+    const activeClassIds = activeClasses.map(c => c.id)
+
+    // If no classes assigned for this year, show empty
+    if (activeClassIds.length === 0) {
         return (
             <CounselorApprovalClient
                 items={[]}
                 classes={[]}
+                availableYears={availableYears}
                 pageCount={0}
                 currentPage={1}
                 totalItems={0}
@@ -57,12 +65,12 @@ export default async function CounselorApprovalPage({
         )
       `, { count: 'exact' })
         .eq('status', 'COUNSELOR_REVIEW')
-        .in('class_id', assignedClassIds) // Security: Only assigned classes
+        .in('class_id', activeClassIds) // Security: Only assigned classes for active year
 
     // Apply filters
     if (classId !== 'all') {
         // Verify class is assigned
-        if (assignedClassIds.includes(classId)) {
+        if (activeClassIds.includes(classId)) {
             dbQuery = dbQuery.eq('class_id', classId)
         } else {
             // Invalid class selection (security), restrict to assigned
@@ -87,7 +95,7 @@ export default async function CounselorApprovalPage({
             )
         `, { count: 'exact' })
             .eq('status', 'COUNSELOR_REVIEW')
-            .in('class_id', assignedClassIds) // Re-apply security
+            .in('class_id', activeClassIds) // Re-apply security
             .ilike('student.full_name', `%${query}%`)
 
         if (classId !== 'all') {
@@ -117,7 +125,8 @@ export default async function CounselorApprovalPage({
     return (
         <CounselorApprovalClient
             items={sheets}
-            classes={classes || []}
+            classes={activeClasses}
+            availableYears={availableYears}
             pageCount={pageCount}
             currentPage={currentPage}
             totalItems={totalItems}
