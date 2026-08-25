@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { GraduationCap, Loader2, Eye, EyeOff } from 'lucide-react'
+import { Loader2, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
@@ -83,10 +84,15 @@ export default function LoginPage() {
             <div className={`w-full max-w-[400px] transition-all duration-500 ease-out ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
                 {/* Logo / Brand Section */}
                 <div className="flex flex-col items-center mb-8">
-                    <div className="h-12 w-12 bg-emerald-700 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-700/20 mb-4">
-                        <GraduationCap className="h-7 w-7 text-white" />
-                    </div>
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">e-Tuntas</h1>
+                    <Image
+                        src="/etuntas-logo.png"
+                        alt="Logo TUNTASIN"
+                        width={48}
+                        height={48}
+                        className="h-12 w-12 rounded-xl object-cover mb-4"
+                        priority
+                    />
+                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">TUNTASIN</h1>
                     <p className="text-slate-500 text-sm mt-1">Sistem Ketuntasan SMKN 1 Bondowoso</p>
                 </div>
 
@@ -149,7 +155,7 @@ export default function LoginPage() {
                 </Card>
 
                 <p className="text-center text-slate-400 text-xs mt-8">
-                    &copy; 2026 e-Tuntas. All rights reserved.
+                    &copy; 2026 TUNTASIN. All rights reserved.
                 </p>
             </div>
         </div>

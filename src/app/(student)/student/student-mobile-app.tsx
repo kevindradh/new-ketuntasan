@@ -140,7 +140,7 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
             // Footer
             doc.setFontSize(9)
             doc.setTextColor(128)
-            doc.text('Dokumen ini dihasilkan secara digital oleh Sistem e-Tuntas', 105, 285, { align: 'center' })
+            doc.text('Dokumen ini dihasilkan secara digital oleh Sistem TUNTASIN', 105, 285, { align: 'center' })
 
             // Save
             const safeName = (profile?.full_name || 'Siswa').replace(/[^a-zA-Z0-9]/g, '_')

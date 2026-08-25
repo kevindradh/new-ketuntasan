@@ -2,9 +2,9 @@
 
 import * as React from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import {
-  GraduationCap,
   LayoutDashboard,
   BookOpen,
   Users,
@@ -19,6 +19,7 @@ import {
   Eye,
   TrendingUp,
   CalendarRange,
+  GraduationCap,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
@@ -192,12 +193,17 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-emerald-700 text-white">
-                  <GraduationCap className="size-4" />
-                </div>
+                <Image
+                  src="/etuntas-logo.png"
+                  alt="Logo TUNTASIN"
+                  width={32}
+                  height={32}
+                  className="size-8 rounded-lg object-cover"
+                  priority
+                />
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-bold text-emerald-700">
-                    e-Tuntas
+                    TUNTASIN
                   </span>
                   <span className="truncate text-xs text-muted-foreground">
                     SMKN 1 Bondowoso

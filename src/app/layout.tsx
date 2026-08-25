@@ -9,7 +9,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "e-Tuntas SMKN 1 Bondowoso",
+  title: "TUNTASIN SMKN 1 Bondowoso",
   description: "Sistem Ketuntasan Mata Pelajaran SMKN 1 Bondowoso",
 };
 
