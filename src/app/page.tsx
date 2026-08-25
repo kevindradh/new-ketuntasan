@@ -20,6 +20,12 @@ export default function Home() {
     <div className="relative min-h-screen bg-slate-50">
       {/* Decorative background layer - satu kanvas untuk navbar + hero */}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[640px] overflow-hidden">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='2' cy='2' r='1.3' fill='%2364748B' fill-opacity='0.12'/%3E%3C/svg%3E")`,
+          }}
+        />
         <div className="absolute -top-24 -right-24 h-80 w-80 rounded-full bg-emerald-200/30 blur-3xl" />
         <div className="absolute top-1/3 -left-32 h-96 w-96 rounded-full bg-emerald-100/40 blur-3xl" />
         <div className="absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-emerald-300/20 blur-3xl" />
@@ -37,11 +43,11 @@ export default function Home() {
               className="text-4xl md:text-6xl font-extrabold text-slate-900 mb-6 leading-[1.08] tracking-tight animate-slideIn motion-reduce:animate-none"
               style={{ animationFillMode: "both", animationDelay: "0.08s" }}
             >
-              Kelola <span className="text-emerald-700">Ketuntasan</span>
+              Validasi <span className="text-emerald-700">Ketuntasan</span> Siswa,
               <span className="block mt-2">
-                Mata Pelajaran{" "}
+                Cepat dan{" "}
                 <span className="relative inline-block">
-                  Siswa
+                  Transparan
                   <svg aria-hidden className="absolute left-0 -bottom-1.5 w-full" viewBox="0 0 120 14" preserveAspectRatio="none" height="5">
                     <path d="M4 10C30 4 62 3 116 7" stroke="#006A4E" strokeWidth="5" strokeLinecap="round" fill="none" opacity="0.3" />
                   </svg>
@@ -53,7 +59,7 @@ export default function Home() {
               className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto animate-fadeIn motion-reduce:animate-none"
               style={{ animationFillMode: "both", animationDelay: "0.16s" }}
             >
-              Sistem digital untuk memvalidasi ketuntasan mata pelajaran siswa SMKN 1 Bondowoso dengan alur approval bertingkat dari Guru → Wali Kelas → Guru BK
+              Digitalisasi alur validasi kelayakan ujian — guru mengisi ketuntasan, wali kelas dan guru BK menyetujui, semua terpantau real-time tanpa kertas.
             </p>
 
             {/* CTA */}
@@ -62,13 +68,13 @@ export default function Home() {
               style={{ animationFillMode: "both", animationDelay: "0.24s" }}
             >
               <Link href="/login">
-                <Button size="lg" className="gradient-primary border-0 text-lg px-8 py-6 font-semibold shadow-lg shadow-emerald-700/25 hover:shadow-xl hover:shadow-emerald-700/30 hover:-translate-y-0.5 transition-all">
-                  Mulai Sekarang
+                <Button size="lg" className="gradient-primary border-0 font-semibold shadow-lg shadow-emerald-700/25 hover:shadow-xl hover:shadow-emerald-700/30 hover:-translate-y-0.5 transition-all">
+                  Mulai Gunakan Sekarang
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" asChild className="text-lg px-8 py-6 font-semibold bg-white/70 backdrop-blur">
-                <a href="#fitur">Pelajari Lebih Lanjut</a>
+              <Button size="lg" variant="outline" asChild className="font-semibold bg-white/70 backdrop-blur">
+                <a href="#fitur">Lihat Cara Kerja</a>
               </Button>
             </div>
           </div>

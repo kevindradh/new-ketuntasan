@@ -31,13 +31,13 @@ export function Navbar() {
       }`}
     >
       <nav className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="grid h-16 grid-cols-[1fr_auto_1fr] items-center">
           {/* Logo */}
           <Link
             href="/"
             onClick={() => setOpen(false)}
             aria-label="e-Tuntas - beranda"
-            className="flex items-center gap-2.5"
+            className="flex items-center gap-2.5 justify-self-start"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-700 text-white shadow-sm shadow-emerald-700/20">
               <GraduationCap className="h-5 w-5" />
@@ -59,15 +59,10 @@ export function Navbar() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2">
-            <Link href="/login" className="hidden sm:inline-flex">
-              <Button variant="ghost" size="sm" className="font-medium text-slate-700">
-                Masuk
-              </Button>
-            </Link>
+          <div className="flex items-center gap-2 justify-self-end">
             <Link href="/login">
               <Button size="sm" className="gradient-primary border-0 font-semibold">
-                Coba Sekarang
+                Masuk
               </Button>
             </Link>
             <button
