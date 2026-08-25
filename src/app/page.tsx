@@ -8,7 +8,10 @@ import {
   ArrowRight,
   Shield,
   Zap,
-  BarChart3
+  BarChart3,
+  Award,
+  Check,
+  Clock,
 } from "lucide-react";
 
 export default function Home() {
@@ -41,50 +44,154 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 pt-16 pb-24">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 rounded-full text-emerald-700 text-sm font-medium mb-6">
-            <Zap className="h-4 w-4" />
-            <span>Sistem Modern untuk SMKN 1 Bondowoso</span>
-          </div>
-
-          <h1 className="text-4xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
-            Kelola Ketuntasan
-            <span className="block text-emerald-700">
-              Mata Pelajaran Siswa
-            </span>
-          </h1>
-
-          <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto">
-            Sistem digital untuk memvalidasi ketuntasan mata pelajaran siswa SMKN 1 Bondowoso dengan alur approval bertingkat dari Guru → Wali Kelas → Guru BK
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/login">
-              <Button size="lg" className="gradient-primary border-0 text-lg px-8 py-6 font-medium shadow-lg shadow-emerald-700/25 hover:shadow-xl hover:shadow-emerald-700/30 transition-all">
-                Mulai Sekarang
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6 font-medium">
-              Pelajari Lebih Lanjut
-            </Button>
-          </div>
+      <section className="relative overflow-hidden">
+        {/* Decorative blurred blobs (solid color, bukan gradient) */}
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-24 -right-24 h-80 w-80 rounded-full bg-emerald-200/60 blur-3xl" />
+          <div className="absolute top-1/3 -left-32 h-96 w-96 rounded-full bg-emerald-100 blur-3xl" />
+          <div className="absolute -bottom-16 right-1/4 h-72 w-72 rounded-full bg-emerald-300/40 blur-3xl" />
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-20 max-w-4xl mx-auto">
-          {[
-            { value: "100%", label: "Digital" },
-            { value: "< 3 Hari", label: "Waktu Approval" },
-            { value: "Real-time", label: "Notifikasi" },
-            { value: "5 Role", label: "Pengguna" },
-          ].map((stat, i) => (
-            <div key={i} className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 text-center border border-white/50 shadow-lg">
-              <div className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">{stat.value}</div>
-              <div className="text-sm text-slate-600">{stat.label}</div>
+        <div className="container relative mx-auto px-4 pt-16 pb-24">
+          <div className="max-w-3xl mx-auto text-center">
+            {/* Headline */}
+            <h1
+              className="text-4xl md:text-6xl font-extrabold text-slate-900 mb-6 leading-[1.08] tracking-tight animate-slideIn motion-reduce:animate-none"
+              style={{ animationFillMode: "both", animationDelay: "0.08s" }}
+            >
+              Kelola <span className="text-emerald-700">Ketuntasan</span>
+              <span className="block mt-2">
+                Mata Pelajaran{" "}
+                <span className="relative inline-block">
+                  Siswa
+                  <svg aria-hidden className="absolute left-0 -bottom-1.5 w-full" viewBox="0 0 120 14" preserveAspectRatio="none" height="5">
+                    <path d="M4 10C30 4 62 3 116 7" stroke="#006A4E" strokeWidth="5" strokeLinecap="round" fill="none" opacity="0.3" />
+                  </svg>
+                </span>
+              </span>
+            </h1>
+
+            <p
+              className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto animate-fadeIn motion-reduce:animate-none"
+              style={{ animationFillMode: "both", animationDelay: "0.16s" }}
+            >
+              Sistem digital untuk memvalidasi ketuntasan mata pelajaran siswa SMKN 1 Bondowoso dengan alur approval bertingkat dari Guru → Wali Kelas → Guru BK
+            </p>
+
+            {/* CTA */}
+            <div
+              className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slideIn motion-reduce:animate-none"
+              style={{ animationFillMode: "both", animationDelay: "0.24s" }}
+            >
+              <Link href="/login">
+                <Button size="lg" className="gradient-primary border-0 text-lg px-8 py-6 font-semibold shadow-lg shadow-emerald-700/25 hover:shadow-xl hover:shadow-emerald-700/30 hover:-translate-y-0.5 transition-all">
+                  Mulai Sekarang
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Button size="lg" variant="outline" className="text-lg px-8 py-6 font-semibold bg-white/70 backdrop-blur">
+                Pelajari Lebih Lanjut
+              </Button>
             </div>
-          ))}
+          </div>
+
+          {/* Product Mockup (glassmorphism) */}
+          <div
+            className="mt-16 max-w-5xl mx-auto relative animate-fadeIn motion-reduce:animate-none"
+            style={{ animationFillMode: "both", animationDelay: "0.32s" }}
+          >
+            <div aria-hidden className="absolute -inset-4 rounded-4xl bg-emerald-200/40 blur-2xl" />
+
+            <div className="relative rounded-3xl border border-emerald-200/70 bg-white/80 backdrop-blur-xl shadow-2xl shadow-emerald-900/10 overflow-hidden">
+              {/* Window bar */}
+              <div className="flex items-center gap-2 px-5 py-3 border-b border-emerald-100 bg-white/70">
+                <span className="h-3 w-3 rounded-full bg-slate-300" />
+                <span className="h-3 w-3 rounded-full bg-slate-300" />
+                <span className="h-3 w-3 rounded-full bg-slate-300" />
+                <div className="ml-4 hidden sm:flex flex-1 max-w-xs items-center gap-2 rounded-md bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs text-slate-500">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                  app.etuntas.sch.id/dashboard
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-5 gap-6 p-6 md:p-8">
+                {/* Left: active exam + checklist */}
+                <div className="md:col-span-3 space-y-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 shrink-0 rounded-xl bg-emerald-700 flex items-center justify-center text-white">
+                      <GraduationCap className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 truncate">Ujian Tengah Semester</p>
+                      <p className="text-xs text-slate-500">XII RPL 1 • Genap 2025/2026</p>
+                    </div>
+                    <span className="ml-auto shrink-0 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">Dalam Proses</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {[
+                      { name: "Matematika", done: true },
+                      { name: "Bahasa Indonesia", done: true },
+                      { name: "Basis Data", done: true },
+                      { name: "Pemrograman Web", done: false },
+                    ].map((s) => (
+                      <div key={s.name} className="flex items-center gap-3 rounded-xl border border-emerald-100 bg-white/70 px-4 py-2.5">
+                        <span className={`h-6 w-6 shrink-0 rounded-md flex items-center justify-center ${s.done ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-400"}`}>
+                          {s.done ? <Check className="h-3.5 w-3.5" /> : <Clock className="h-3.5 w-3.5" />}
+                        </span>
+                        <span className="flex-1 text-sm font-medium text-slate-700">{s.name}</span>
+                        <span className={`text-xs font-medium ${s.done ? "text-emerald-700" : "text-slate-400"}`}>
+                          {s.done ? "Tuntas" : "Belum"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Right: progress ring + approval steps */}
+                <div className="md:col-span-2 space-y-5">
+                  <div className="rounded-2xl border border-emerald-100 bg-white/70 p-5">
+                    <p className="text-sm font-semibold text-slate-900 mb-3">Ketuntasan</p>
+                    <div className="flex items-center gap-4">
+                      <div className="relative h-20 w-20 shrink-0">
+                        <svg className="h-20 w-20 -rotate-90" viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="42" fill="none" stroke="#e2e8f0" strokeWidth="10" />
+                          <circle cx="50" cy="50" r="42" fill="none" stroke="#006A4E" strokeWidth="10" strokeLinecap="round" strokeDasharray="264 264" strokeDashoffset="66" />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-slate-900">75%</div>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-slate-900">24/32</p>
+                        <p className="text-xs text-slate-500">mata pelajaran tuntas</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-emerald-100 bg-white/70 p-5">
+                    <p className="text-sm font-semibold text-slate-900 mb-4">Alur Approval</p>
+                    <div className="relative">
+                      <div aria-hidden className="absolute left-3.5 top-2 bottom-2 w-px bg-emerald-200" />
+                      <div className="space-y-3">
+                        {[
+                          { icon: Check, label: "Guru Mapel", done: true },
+                          { icon: Check, label: "Wali Kelas", done: true },
+                          { icon: Award, label: "Guru BK", done: false },
+                        ].map((st, i) => (
+                          <div key={i} className="relative flex items-center gap-3">
+                            <span className={`relative z-10 h-7 w-7 shrink-0 rounded-full flex items-center justify-center ${st.done ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-400"}`}>
+                              <st.icon className="h-4 w-4" />
+                            </span>
+                            <span className={`text-sm font-medium ${st.done ? "text-slate-900" : "text-slate-400"}`}>{st.label}</span>
+                            {st.done && <span className="ml-auto text-[11px] font-medium text-emerald-600">Disetujui</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
