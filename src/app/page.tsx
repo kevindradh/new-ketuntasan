@@ -17,19 +17,19 @@ import {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-emerald-50">
+    <div className="relative min-h-screen bg-slate-50">
+      {/* Decorative background layer - satu kanvas untuk navbar + hero */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[640px] overflow-hidden">
+        <div className="absolute -top-24 -right-24 h-80 w-80 rounded-full bg-emerald-200/30 blur-3xl" />
+        <div className="absolute top-1/3 -left-32 h-96 w-96 rounded-full bg-emerald-100/40 blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-emerald-300/20 blur-3xl" />
+      </div>
+
       {/* Navigation */}
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Decorative blurred blobs (solid color, bukan gradient) */}
-        <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-24 -right-24 h-80 w-80 rounded-full bg-emerald-200/60 blur-3xl" />
-          <div className="absolute top-1/3 -left-32 h-96 w-96 rounded-full bg-emerald-100 blur-3xl" />
-          <div className="absolute -bottom-16 right-1/4 h-72 w-72 rounded-full bg-emerald-300/40 blur-3xl" />
-        </div>
-
+      <section className="relative">
         <div className="container relative mx-auto px-4 pt-16 pb-24">
           <div className="max-w-3xl mx-auto text-center">
             {/* Headline */}
@@ -67,8 +67,8 @@ export default function Home() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6 font-semibold bg-white/70 backdrop-blur">
-                Pelajari Lebih Lanjut
+              <Button size="lg" variant="outline" asChild className="text-lg px-8 py-6 font-semibold bg-white/70 backdrop-blur">
+                <a href="#fitur">Pelajari Lebih Lanjut</a>
               </Button>
             </div>
           </div>
@@ -78,16 +78,16 @@ export default function Home() {
             className="mt-16 max-w-5xl mx-auto relative animate-fadeIn motion-reduce:animate-none"
             style={{ animationFillMode: "both", animationDelay: "0.32s" }}
           >
-            <div aria-hidden className="absolute -inset-4 rounded-4xl bg-emerald-200/40 blur-2xl" />
+            <div aria-hidden className="absolute -inset-4 rounded-4xl bg-emerald-200/20 blur-2xl" />
 
-            <div className="relative rounded-3xl border border-emerald-200/70 bg-white/80 backdrop-blur-xl shadow-2xl shadow-emerald-900/10 overflow-hidden">
+            <div className="relative rounded-3xl border border-slate-200/80 bg-white/80 backdrop-blur-xl shadow-2xl shadow-slate-900/10 overflow-hidden">
               {/* Window bar */}
-              <div className="flex items-center gap-2 px-5 py-3 border-b border-emerald-100 bg-white/70">
+              <div className="flex items-center gap-2 px-5 py-3 border-b border-slate-200 bg-white/70">
                 <span className="h-3 w-3 rounded-full bg-slate-300" />
                 <span className="h-3 w-3 rounded-full bg-slate-300" />
                 <span className="h-3 w-3 rounded-full bg-slate-300" />
-                <div className="ml-4 hidden sm:flex flex-1 max-w-xs items-center gap-2 rounded-md bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs text-slate-500">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                <div className="ml-4 hidden sm:flex flex-1 max-w-xs items-center gap-2 rounded-md bg-slate-100 border border-slate-200 px-3 py-1 text-xs text-slate-500">
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
                   app.etuntas.sch.id/dashboard
                 </div>
               </div>
@@ -103,7 +103,7 @@ export default function Home() {
                       <p className="text-sm font-semibold text-slate-900 truncate">Ujian Tengah Semester</p>
                       <p className="text-xs text-slate-500">XII RPL 1 • Genap 2025/2026</p>
                     </div>
-                    <span className="ml-auto shrink-0 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">Dalam Proses</span>
+                    <span className="ml-auto shrink-0 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">Dalam Proses</span>
                   </div>
 
                   <div className="space-y-2">
@@ -113,7 +113,7 @@ export default function Home() {
                       { name: "Basis Data", done: true },
                       { name: "Pemrograman Web", done: false },
                     ].map((s) => (
-                      <div key={s.name} className="flex items-center gap-3 rounded-xl border border-emerald-100 bg-white/70 px-4 py-2.5">
+                      <div key={s.name} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white/70 px-4 py-2.5">
                         <span className={`h-6 w-6 shrink-0 rounded-md flex items-center justify-center ${s.done ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-400"}`}>
                           {s.done ? <Check className="h-3.5 w-3.5" /> : <Clock className="h-3.5 w-3.5" />}
                         </span>
@@ -128,7 +128,7 @@ export default function Home() {
 
                 {/* Right: progress ring + approval steps */}
                 <div className="md:col-span-2 space-y-5">
-                  <div className="rounded-2xl border border-emerald-100 bg-white/70 p-5">
+                  <div className="rounded-2xl border border-slate-200 bg-white/70 p-5">
                     <p className="text-sm font-semibold text-slate-900 mb-3">Ketuntasan</p>
                     <div className="flex items-center gap-4">
                       <div className="relative h-20 w-20 shrink-0">
@@ -145,10 +145,10 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-emerald-100 bg-white/70 p-5">
+                  <div className="rounded-2xl border border-slate-200 bg-white/70 p-5">
                     <p className="text-sm font-semibold text-slate-900 mb-4">Alur Approval</p>
                     <div className="relative">
-                      <div aria-hidden className="absolute left-3.5 top-2 bottom-2 w-px bg-emerald-200" />
+                      <div aria-hidden className="absolute left-3.5 top-2 bottom-2 w-px bg-slate-200" />
                       <div className="space-y-3">
                         {[
                           { icon: Check, label: "Guru Mapel", done: true },
@@ -160,7 +160,7 @@ export default function Home() {
                               <st.icon className="h-4 w-4" />
                             </span>
                             <span className={`text-sm font-medium ${st.done ? "text-slate-900" : "text-slate-400"}`}>{st.label}</span>
-                            {st.done && <span className="ml-auto text-[11px] font-medium text-emerald-600">Disetujui</span>}
+                            {st.done && <span className="ml-auto text-[11px] font-medium text-slate-500">Disetujui</span>}
                           </div>
                         ))}
                       </div>
