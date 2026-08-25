@@ -231,17 +231,17 @@ export function CompletionSheetsClient({
                         return (
                             <Card
                                 key={assign.id}
-                                className="group hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer border-slate-200"
+                                className="group hover:border-emerald-500 hover:shadow-lg transition-all cursor-pointer border-slate-200"
                                 onClick={() => handleAssignmentSelect(assign)}
                             >
                                 <CardHeader>
                                     <div className="flex justify-between items-start">
-                                        <Badge variant="outline" className="mb-2 bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200">
+                                        <Badge variant="outline" className="mb-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200">
                                             {assign.class?.name}
                                         </Badge>
-                                        <ArrowRight className="h-5 w-5 text-slate-300 group-hover:text-blue-500 transition-colors" />
+                                        <ArrowRight className="h-5 w-5 text-slate-300 group-hover:text-emerald-500 transition-colors" />
                                     </div>
-                                    <CardTitle className="text-xl group-hover:text-blue-700 transition-colors">
+                                    <CardTitle className="text-xl group-hover:text-emerald-700 transition-colors">
                                         {assign.subject?.name}
                                     </CardTitle>
                                     <CardDescription>{assign.subject?.code}</CardDescription>
@@ -261,7 +261,7 @@ export function CompletionSheetsClient({
                                     </div>
                                     <div className="mt-4 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                                            className="h-full bg-emerald-600 rounded-full transition-all duration-500"
                                             style={{ width: `${totalStudents ? (completedCount / totalStudents) * 100 : 0}%` }}
                                         />
                                     </div>
@@ -295,7 +295,7 @@ export function CompletionSheetsClient({
 
                 <div className="flex items-center gap-3">
                     {selectedItemIds.length > 0 && (
-                        <Button onClick={() => setShowBulkDialog(true)} className="bg-blue-600 hover:bg-blue-700 text-white animate-in fade-in zoom-in duration-200">
+                        <Button onClick={() => setShowBulkDialog(true)} className="bg-emerald-700 hover:bg-emerald-800 text-white animate-in fade-in zoom-in duration-200">
                             <CheckSquare className="h-4 w-4 mr-2" />
                             Tandai Tuntas ({selectedItemIds.length})
                         </Button>

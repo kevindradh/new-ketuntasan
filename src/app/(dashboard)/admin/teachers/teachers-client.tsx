@@ -147,7 +147,7 @@ export function TeachersClient({
                 <div className="flex items-center gap-2">
                     <span className="font-medium">{row.getValue("full_name")}</span>
                     {row.original.is_counselor && (
-                        <Badge variant="secondary" className="text-xs bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-0">
+                        <Badge variant="secondary" className="text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-0">
                             Guru BK
                         </Badge>
                     )}
@@ -169,7 +169,7 @@ export function TeachersClient({
                 const teacher = row.original
                 return (
                     <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                        <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50">
                             <Link href={`/admin/teachers/${teacher.id}/assignments`}>
                                 <ArrowRight className="h-4 w-4" />
                                 <span className="sr-only">Atur Mapel</span>
@@ -208,8 +208,8 @@ export function TeachersClient({
                                         </>
                                     ) : (
                                         <>
-                                            <Plus className="mr-2 h-4 w-4 text-indigo-500" />
-                                            <span className="text-indigo-600">Jadikan Guru BK</span>
+                                            <Plus className="mr-2 h-4 w-4 text-emerald-600" />
+                                            <span className="text-emerald-700">Jadikan Guru BK</span>
                                         </>
                                     )}
                                 </DropdownMenuItem>

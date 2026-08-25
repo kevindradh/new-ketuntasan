@@ -154,7 +154,7 @@ export function TeacherImportWizard() {
                 {step === 1 && (
                     <div className="space-y-6 py-4">
                         <div className="border-2 border-dashed border-slate-200 rounded-lg p-10 flex flex-col items-center justify-center text-center space-y-4 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                            <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                            <div className="h-12 w-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700">
                                 <Upload className="h-6 w-6" />
                             </div>
                             <div>

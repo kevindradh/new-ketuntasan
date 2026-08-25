@@ -44,11 +44,11 @@ const statusLabels: Record<string, string> = {
 }
 
 const statusColors: Record<string, string> = {
-    'PENDING': 'bg-slate-100 text-slate-700',
-    'IN_PROGRESS': 'bg-blue-100 text-blue-700',
-    'HOMEROOM_REVIEW': 'bg-amber-100 text-amber-700',
-    'COUNSELOR_REVIEW': 'bg-purple-100 text-purple-700',
-    'APPROVED': 'bg-green-100 text-green-700',
+    'PENDING': 'bg-emerald-50 text-emerald-600',
+    'IN_PROGRESS': 'bg-emerald-100 text-emerald-700',
+    'HOMEROOM_REVIEW': 'bg-emerald-100 text-emerald-700',
+    'COUNSELOR_REVIEW': 'bg-emerald-100 text-emerald-700',
+    'APPROVED': 'bg-emerald-600 text-white',
 }
 
 export function MonitoringClient({ items, pageCount, currentPage, totalItems, availableClasses = [], availableYears = [] }: MonitoringClientProps) {

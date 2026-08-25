@@ -7,8 +7,8 @@ export default function NotFound() {
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
             <div className="max-w-md w-full text-center space-y-6">
                 {/* Illustration/Icon */}
-                <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto animate-in zoom-in duration-300">
-                    <FileQuestion className="w-12 h-12 text-blue-600" />
+                <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto animate-in zoom-in duration-300">
+                    <FileQuestion className="w-12 h-12 text-emerald-700" />
                 </div>
 
                 {/* Text Content */}

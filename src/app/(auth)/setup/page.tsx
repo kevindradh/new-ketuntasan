@@ -85,19 +85,19 @@ export default function SetupPage() {
 
     const roleColors: Record<string, string> = {
         ADMIN: 'bg-red-100 text-red-700',
-        TEACHER: 'bg-blue-100 text-blue-700',
-        HOMEROOM: 'bg-green-100 text-green-700',
-        COUNSELOR: 'bg-purple-100 text-purple-700',
-        STUDENT: 'bg-amber-100 text-amber-700',
+        TEACHER: 'bg-emerald-100 text-emerald-700',
+        HOMEROOM: 'bg-emerald-100 text-emerald-700',
+        COUNSELOR: 'bg-emerald-100 text-emerald-700',
+        STUDENT: 'bg-emerald-100 text-emerald-700',
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-8">
+        <div className="min-h-screen bg-emerald-900 p-8">
             <div className="max-w-3xl mx-auto space-y-6">
                 <div className="text-center text-white">
                     <GraduationCap className="h-16 w-16 mx-auto mb-4" />
                     <h1 className="text-3xl font-bold">Setup Demo e-Tuntas</h1>
-                    <p className="text-blue-200 mt-2">Buat akun demo untuk testing aplikasi</p>
+                    <p className="text-emerald-200 mt-2">Buat akun demo untuk testing aplikasi</p>
                 </div>
 
                 <Card className="shadow-2xl">
@@ -149,7 +149,7 @@ export default function SetupPage() {
                         </div>
 
                         {currentStep && (
-                            <div className="p-3 bg-blue-50 rounded-lg text-blue-700 text-sm flex items-center gap-2">
+                            <div className="p-3 bg-emerald-50 rounded-lg text-emerald-700 text-sm flex items-center gap-2">
                                 <Loader2 className="h-4 w-4 animate-spin" />
                                 {currentStep}
                             </div>
@@ -193,28 +193,28 @@ export default function SetupPage() {
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm">
                         <div className="flex items-start gap-3">
-                            <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">1</div>
+                            <div className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold">1</div>
                             <div>
                                 <p className="font-medium">Login sebagai Admin</p>
                                 <p className="text-slate-500">Buat ujian dan generate lembar ketuntasan</p>
                             </div>
                         </div>
                         <div className="flex items-start gap-3">
-                            <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">2</div>
+                            <div className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold">2</div>
                             <div>
                                 <p className="font-medium">Login sebagai Guru</p>
                                 <p className="text-slate-500">Isi ketuntasan mata pelajaran siswa</p>
                             </div>
                         </div>
                         <div className="flex items-start gap-3">
-                            <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">3</div>
+                            <div className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold">3</div>
                             <div>
                                 <p className="font-medium">Login sebagai Wali Kelas</p>
                                 <p className="text-slate-500">Approve lembar ketuntasan siswa</p>
                             </div>
                         </div>
                         <div className="flex items-start gap-3">
-                            <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">4</div>
+                            <div className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold">4</div>
                             <div>
                                 <p className="font-medium">Login sebagai Guru BK</p>
                                 <p className="text-slate-500">Final approval untuk kelayakan ujian</p>

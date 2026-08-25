@@ -65,10 +65,10 @@ const roleLabels: Record<UserRole, string> = {
 
 const roleColors: Record<UserRole, string> = {
   ADMIN: "bg-red-100 text-red-700",
-  TEACHER: "bg-blue-100 text-blue-700",
-  HOMEROOM: "bg-green-100 text-green-700",
-  COUNSELOR: "bg-purple-100 text-purple-700",
-  STUDENT: "bg-amber-100 text-amber-700",
+  TEACHER: "bg-emerald-100 text-emerald-700",
+  HOMEROOM: "bg-emerald-100 text-emerald-700",
+  COUNSELOR: "bg-emerald-100 text-emerald-700",
+  STUDENT: "bg-emerald-100 text-emerald-700",
 }
 
 // Menu configuration based on roles
@@ -192,11 +192,11 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-emerald-700 text-white">
                   <GraduationCap className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  <span className="truncate font-bold text-emerald-700">
                     e-Tuntas
                   </span>
                   <span className="truncate text-xs text-muted-foreground">
@@ -307,7 +307,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage src={user.avatar_url} alt={user.full_name} />
-                    <AvatarFallback className="rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-xs">
+                    <AvatarFallback className="rounded-lg bg-emerald-700 text-white text-xs">
                       {getInitials(user.full_name)}
                     </AvatarFallback>
                   </Avatar>
@@ -327,7 +327,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                   <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                     <Avatar className="h-8 w-8 rounded-lg">
                       <AvatarImage src={user.avatar_url} alt={user.full_name} />
-                      <AvatarFallback className="rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-xs">
+                      <AvatarFallback className="rounded-lg bg-emerald-700 text-white text-xs">
                         {getInitials(user.full_name)}
                       </AvatarFallback>
                     </Avatar>

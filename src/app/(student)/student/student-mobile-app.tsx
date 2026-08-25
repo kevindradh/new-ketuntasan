@@ -25,11 +25,11 @@ import type { CompletionSheet, CompletionItem, Subject, Profile } from '@/types/
 
 // Status configuration
 const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
-    PENDING: { label: 'Menunggu', color: 'text-slate-600', bgColor: 'bg-slate-100' },
-    IN_PROGRESS: { label: 'Dalam Proses', color: 'text-blue-600', bgColor: 'bg-blue-100' },
-    HOMEROOM_REVIEW: { label: 'Review Wali Kelas', color: 'text-amber-600', bgColor: 'bg-amber-100' },
-    COUNSELOR_REVIEW: { label: 'Review Guru BK', color: 'text-purple-600', bgColor: 'bg-purple-100' },
-    APPROVED: { label: 'Disetujui', color: 'text-green-600', bgColor: 'bg-green-100' },
+    PENDING: { label: 'Menunggu', color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
+    IN_PROGRESS: { label: 'Dalam Proses', color: 'text-emerald-700', bgColor: 'bg-emerald-100' },
+    HOMEROOM_REVIEW: { label: 'Review Wali Kelas', color: 'text-emerald-700', bgColor: 'bg-emerald-100' },
+    COUNSELOR_REVIEW: { label: 'Review Guru BK', color: 'text-emerald-700', bgColor: 'bg-emerald-100' },
+    APPROVED: { label: 'Disetujui', color: 'text-white', bgColor: 'bg-emerald-600' },
     REJECTED: { label: 'Ditolak', color: 'text-red-600', bgColor: 'bg-red-100' },
 }
 
@@ -193,15 +193,15 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
     const renderHome = () => (
         <div className="flex-1 overflow-auto pb-20">
             {/* Header */}
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white px-5 pt-6 pb-8">
+            <div className="bg-emerald-700 text-white px-5 pt-6 pb-8">
                 <div className="flex items-center gap-4 mb-5">
                     <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
                         <GraduationCap className="w-7 h-7" />
                     </div>
                     <div>
-                        <p className="text-blue-100 text-sm">Selamat Datang 👋</p>
+                        <p className="text-emerald-100 text-sm">Selamat Datang 👋</p>
                         <h1 className="text-xl font-bold">{profile?.full_name}</h1>
-                        <p className="text-blue-200 text-sm">{currentClass?.name}</p>
+                        <p className="text-emerald-200 text-sm">{currentClass?.name}</p>
                     </div>
                 </div>
 
@@ -222,9 +222,9 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
                                 </div>
                             </div>
                             <div className="flex-1">
-                                <p className="text-blue-100 text-sm">Ketuntasan</p>
+                                <p className="text-emerald-100 text-sm">Ketuntasan</p>
                                 <p className="text-2xl font-bold">{completedItems}/{totalItems}</p>
-                                <p className="text-blue-200 text-xs">
+                                <p className="text-emerald-200 text-xs">
                                     {progress === 100 ? '🎉 Semua tuntas!' : `${totalItems - completedItems} tersisa`}
                                 </p>
                             </div>
@@ -339,7 +339,7 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
                                 <p className="text-sm text-slate-500 mb-3">{sheet.class?.name}</p>
                                 <div className="flex items-center gap-3">
                                     <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${percent}%` }} />
+                                        <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${percent}%` }} />
                                     </div>
                                     <span className="text-sm font-medium text-slate-600">{percent}%</span>
                                 </div>
@@ -350,7 +350,7 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
                                     {sheet.status === 'APPROVED' && (
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleDownloadPDF(sheet) }}
-                                            className="flex items-center gap-1 text-xs text-blue-600 font-medium"
+                                            className="flex items-center gap-1 text-xs text-emerald-700 font-medium"
                                         >
                                             <Download className="w-4 h-4" />
                                             Download PDF
@@ -379,14 +379,14 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
                     {notifications.map((notif) => (
                         <div
                             key={notif.id}
-                            className={`p-4 rounded-2xl shadow-sm border transition-colors ${notif.is_read ? 'bg-white border-slate-200' : 'bg-white border-blue-200 ring-1 ring-blue-50'
+                            className={`p-4 rounded-2xl shadow-sm border transition-colors ${notif.is_read ? 'bg-white border-slate-200' : 'bg-white border-emerald-200 ring-1 ring-emerald-50'
                                 }`}
                             onClick={() => markAsRead(notif.id)}
                         >
                             <div className="flex gap-3">
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${notif.type.includes('REJECTED') ? 'bg-red-100 text-red-600' :
                                     notif.type.includes('APPROVED') ? 'bg-green-100 text-green-600' :
-                                        'bg-blue-100 text-blue-600'
+                                        'bg-emerald-100 text-emerald-600'
                                     }`}>
                                     {notif.type.includes('REJECTED') ? <AlertCircle className="w-5 h-5" /> :
                                         notif.type.includes('APPROVED') ? <CheckCircle2 className="w-5 h-5" /> :
@@ -394,14 +394,14 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex justify-between items-start mb-1">
-                                        <h3 className={`font-semibold text-sm ${notif.is_read ? 'text-slate-900' : 'text-blue-900'}`}>
+                                        <h3 className={`font-semibold text-sm ${notif.is_read ? 'text-slate-900' : 'text-emerald-900'}`}>
                                             {notif.title}
                                         </h3>
                                         <span className="text-[10px] text-slate-400 whitespace-nowrap ml-2">
                                             {formatDate(notif.created_at)}
                                         </span>
                                     </div>
-                                    <p className={`text-xs ${notif.is_read ? 'text-slate-500' : 'text-blue-700'}`}>
+                                    <p className={`text-xs ${notif.is_read ? 'text-slate-500' : 'text-emerald-700'}`}>
                                         {notif.message}
                                     </p>
                                 </div>
@@ -419,7 +419,7 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
 
             <div className="bg-white rounded-2xl shadow-sm p-5 mb-4">
                 <div className="flex items-center gap-4 mb-4">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold">
+                    <div className="w-16 h-16 rounded-full bg-emerald-700 flex items-center justify-center text-white text-2xl font-bold">
                         {profile?.full_name?.charAt(0) || 'S'}
                     </div>
                     <div>
@@ -502,7 +502,7 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
                                         <p className="text-xs text-slate-500">{item.teacher?.full_name}</p>
                                         {item.notes && (
                                             <div className="mt-1 flex items-start gap-1">
-                                                <FileText className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
+                                                <FileText className="w-3 h-3 text-emerald-600 shrink-0 mt-0.5" />
                                                 <p className="text-xs text-slate-600 italic">"{item.notes}"</p>
                                             </div>
                                         )}
@@ -544,7 +544,7 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
                         {selectedSheet.status === 'APPROVED' ? (
                             <button
                                 onClick={() => handleDownloadPDF(selectedSheet)}
-                                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium py-3 rounded-xl flex items-center justify-center gap-2"
+                                className="w-full bg-emerald-700 text-white font-medium py-3 rounded-xl flex items-center justify-center gap-2"
                             >
                                 <Download className="w-5 h-5" />
                                 Download PDF
@@ -586,7 +586,7 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
                                 URL.revokeObjectURL(downloadState.url)
                             }, 1000)
                         }}
-                        className="w-full bg-blue-600 text-white font-medium py-3 rounded-xl flex items-center justify-center gap-2 mb-3 shadow-lg shadow-blue-200 hover:bg-blue-700 transition-colors"
+                        className="w-full bg-emerald-700 text-white font-medium py-3 rounded-xl flex items-center justify-center gap-2 mb-3 shadow-lg shadow-emerald-200 hover:bg-emerald-800 transition-colors"
                     >
                         <Download className="w-5 h-5" />
                         Download File
@@ -626,7 +626,7 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex flex-col items-center py-2 px-4 rounded-xl transition-colors relative ${activeTab === tab.id
-                                ? 'text-blue-600'
+                                ? 'text-emerald-700'
                                 : 'text-slate-400'
                                 }`}
                         >

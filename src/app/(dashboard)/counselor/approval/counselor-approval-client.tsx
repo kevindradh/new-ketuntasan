@@ -155,7 +155,7 @@ export function CounselorApprovalClient({ items, classes, availableYears = [], p
             id: "status",
             header: "Status",
             cell: ({ row }) => (
-                <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100">
+                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
                     Menunggu Approval
                 </Badge>
             )

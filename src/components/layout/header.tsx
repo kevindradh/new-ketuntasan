@@ -77,7 +77,7 @@ export function Header({
                                     >
                                         <div className="flex items-start gap-2 w-full">
                                             {!notif.is_read && (
-                                                <div className="h-2 w-2 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
+                                                <div className="h-2 w-2 rounded-full bg-emerald-600 mt-2 flex-shrink-0" />
                                             )}
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-medium text-sm">{notif.title}</p>

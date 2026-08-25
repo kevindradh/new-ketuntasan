@@ -49,7 +49,7 @@ export default function Loading() {
                     </CardContent>
                 </Card>
 
-                <Card className="border-0 shadow-sm bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                <Card className="border-0 shadow-sm bg-emerald-700 text-white">
                     <CardHeader>
                         <Skeleton className="h-6 w-32 bg-white/20" />
                         <Skeleton className="h-4 w-48 bg-white/20" />

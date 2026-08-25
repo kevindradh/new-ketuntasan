@@ -190,7 +190,7 @@ export function AssignmentsClient({
                     <div>
                         <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Penugasan Mengajar</h1>
                         <div className="flex items-center gap-3 mt-2">
-                            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                            <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-lg">
                                 {teacher.full_name.substring(0, 2).toUpperCase()}
                             </div>
                             <div>

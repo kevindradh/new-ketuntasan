@@ -13,7 +13,7 @@ import {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-emerald-50">
       {/* Navigation */}
       <nav className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
@@ -21,7 +21,7 @@ export default function Home() {
             <div className="p-2 rounded-xl gradient-primary">
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <span className="text-xl font-bold text-emerald-700">
               e-Tuntas
             </span>
           </div>
@@ -43,14 +43,14 @@ export default function Home() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 pt-16 pb-24">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-full text-blue-700 text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 rounded-full text-emerald-700 text-sm font-medium mb-6">
             <Zap className="h-4 w-4" />
             <span>Sistem Modern untuk SMKN 1 Bondowoso</span>
           </div>
 
           <h1 className="text-4xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
             Kelola Ketuntasan
-            <span className="block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <span className="block text-emerald-700">
               Mata Pelajaran Siswa
             </span>
           </h1>
@@ -61,7 +61,7 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/login">
-              <Button size="lg" className="gradient-primary border-0 text-lg px-8 py-6 font-medium shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all">
+              <Button size="lg" className="gradient-primary border-0 text-lg px-8 py-6 font-medium shadow-lg shadow-emerald-700/25 hover:shadow-xl hover:shadow-emerald-700/30 transition-all">
                 Mulai Sekarang
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -113,22 +113,22 @@ export default function Home() {
                 icon: Users,
                 title: "Multi-Role System",
                 description: "Mendukung 5 role berbeda: Admin, Guru Mapel, Wali Kelas, Guru BK, dan Siswa",
-                color: "text-blue-600",
-                bg: "bg-blue-100",
+                color: "text-emerald-600",
+                bg: "bg-emerald-100",
               },
               {
                 icon: FileText,
                 title: "Generate PDF",
                 description: "Lembar ketuntasan dapat diunduh dalam format PDF setelah disetujui",
-                color: "text-purple-600",
-                bg: "bg-purple-100",
+                color: "text-emerald-700",
+                bg: "bg-emerald-100",
               },
               {
                 icon: Zap,
                 title: "Real-time Updates",
                 description: "Notifikasi real-time untuk setiap perubahan status approval",
-                color: "text-amber-600",
-                bg: "bg-amber-100",
+                color: "text-emerald-700",
+                bg: "bg-emerald-100",
               },
               {
                 icon: Shield,
@@ -141,11 +141,11 @@ export default function Home() {
                 icon: BarChart3,
                 title: "Dashboard Analytics",
                 description: "Pantau progress ketuntasan siswa dengan dashboard yang informatif",
-                color: "text-indigo-600",
-                bg: "bg-indigo-100",
+                color: "text-emerald-700",
+                bg: "bg-emerald-100",
               },
             ].map((feature, i) => (
-              <div key={i} className="group p-8 rounded-2xl border border-slate-200 hover:border-blue-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <div key={i} className="group p-8 rounded-2xl border border-slate-200 hover:border-emerald-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                 <div className={`inline-flex p-3 rounded-xl ${feature.bg} mb-6`}>
                   <feature.icon className={`h-6 w-6 ${feature.color}`} />
                 </div>
@@ -158,13 +158,13 @@ export default function Home() {
       </section>
 
       {/* Workflow Section */}
-      <section className="py-24 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white">
+      <section className="py-24 bg-emerald-900 text-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Alur Approval Bertingkat
             </h2>
-            <p className="text-lg text-blue-200 max-w-2xl mx-auto">
+            <p className="text-lg text-emerald-200 max-w-2xl mx-auto">
               Proses validasi yang transparan dan terstruktur
             </p>
           </div>
@@ -182,10 +182,10 @@ export default function Home() {
                     {item.step}
                   </div>
                   <h4 className="font-semibold text-lg">{item.title}</h4>
-                  <p className="text-sm text-blue-200">{item.desc}</p>
+                  <p className="text-sm text-emerald-200">{item.desc}</p>
                 </div>
                 {i < 3 && (
-                  <ArrowRight className="h-6 w-6 text-blue-400 mx-4 hidden md:block" />
+                  <ArrowRight className="h-6 w-6 text-emerald-400 mx-4 hidden md:block" />
                 )}
               </div>
             ))}
@@ -196,15 +196,15 @@ export default function Home() {
       {/* CTA Section */}
       <section className="py-24">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-12 shadow-2xl shadow-blue-500/25">
+          <div className="max-w-3xl mx-auto text-center bg-emerald-700 rounded-3xl p-12 shadow-2xl shadow-emerald-700/25">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               Siap Digitalisasi Proses Ketuntasan?
             </h2>
-            <p className="text-lg text-blue-100 mb-8">
+            <p className="text-lg text-emerald-100 mb-8">
               Mulai gunakan e-Tuntas untuk sekolah Anda sekarang juga
             </p>
             <Link href="/login">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8 py-6 font-medium shadow-lg">
+              <Button size="lg" className="bg-white text-emerald-700 hover:bg-emerald-50 text-lg px-8 py-6 font-medium shadow-lg">
                 Masuk Sekarang
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -218,7 +218,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-blue-600">
+              <div className="p-2 rounded-xl bg-emerald-700">
                 <GraduationCap className="h-5 w-5 text-white" />
               </div>
               <span className="text-lg font-bold text-white">e-Tuntas</span>

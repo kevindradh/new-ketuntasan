@@ -309,7 +309,7 @@ export function PromotionWizard({ classes }: { classes: Class[] }) {
                                 <ScrollArea className="h-[400px]">
                                     {loading ? (
                                         <div className="flex flex-col justify-center items-center h-40 space-y-2">
-                                            <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                                            <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
                                             <p className="text-xs text-slate-400">Memuat data siswa...</p>
                                         </div>
                                     ) : students.length === 0 ? (
@@ -324,7 +324,7 @@ export function PromotionWizard({ classes }: { classes: Class[] }) {
                                                     key={student.id}
                                                     className={`
                                                         flex items-center space-x-3 p-3 transition-colors cursor-pointer hover:bg-slate-50
-                                                        ${selectedStudentIds.includes(student.id) ? 'bg-blue-50/50' : ''}
+                                                        ${selectedStudentIds.includes(student.id) ? 'bg-emerald-50/50' : ''}
                                                     `}
                                                     onClick={(e) => {
                                                         if ((e.target as HTMLElement).getAttribute('role') !== 'checkbox') {
@@ -359,21 +359,21 @@ export function PromotionWizard({ classes }: { classes: Class[] }) {
                 <div className="space-y-6">
                     {isFinalYear ? (
                         /* GRADUATION CARD */
-                        <Card className="border-blue-200 shadow-sm bg-blue-50/50 h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <Card className="border-emerald-200 shadow-sm bg-emerald-50/50 h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <CardHeader className="pb-4">
-                                <CardTitle className="text-lg flex items-center gap-2 text-blue-800">
-                                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">2</span>
+                                <CardTitle className="text-lg flex items-center gap-2 text-emerald-800">
+                                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">2</span>
                                     Konfirmasi Kelulusan
                                 </CardTitle>
-                                <CardDescription className="text-blue-600/80">
+                                <CardDescription className="text-emerald-700/80">
                                     Kelas ini adalah tingkat akhir. Siswa akan diluluskan.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                <div className="p-4 bg-white rounded-lg border border-blue-100 shadow-sm">
+                                <div className="p-4 bg-white rounded-lg border border-emerald-100 shadow-sm">
                                     <div className="flex items-center gap-3 mb-2">
-                                        <div className="p-2 bg-blue-100 rounded-full">
-                                            <GraduationCap className="h-5 w-5 text-blue-600" />
+                                        <div className="p-2 bg-emerald-100 rounded-full">
+                                            <GraduationCap className="h-5 w-5 text-emerald-700" />
                                         </div>
                                         <div>
                                             <p className="font-semibold text-slate-900">Status akan berubah: GRADUATED</p>
@@ -399,7 +399,7 @@ export function PromotionWizard({ classes }: { classes: Class[] }) {
                                 )}
 
                                 <Button
-                                    className="w-full gradient-primary shadow-lg hover:shadow-blue-200 transition-all"
+                                    className="w-full gradient-primary shadow-lg hover:shadow-emerald-200 transition-all"
                                     disabled={loading || selectedStudentIds.length === 0}
                                     onClick={handleProcess}
                                 >
@@ -445,10 +445,10 @@ export function PromotionWizard({ classes }: { classes: Class[] }) {
                                 </div>
 
                                 {/* Info Alert */}
-                                <Alert className="bg-blue-50 border-blue-200">
-                                    <AlertCircle className="h-4 w-4 text-blue-600" />
-                                    <AlertTitle className="text-blue-800 ml-2">Informasi</AlertTitle>
-                                    <AlertDescription className="text-blue-700 ml-2 text-xs leading-relaxed mt-1">
+                                <Alert className="bg-emerald-50 border-emerald-200">
+                                    <AlertCircle className="h-4 w-4 text-emerald-700" />
+                                    <AlertTitle className="text-emerald-800 ml-2">Informasi</AlertTitle>
+                                    <AlertDescription className="text-emerald-700 ml-2 text-xs leading-relaxed mt-1">
                                         Data siswa di kelas lama <b>tidak akan dihapus</b> untuk keperluan arsip riwayat kelas. Siswa akan tercatat aktif di kelas baru.
                                     </AlertDescription>
                                 </Alert>
@@ -466,7 +466,7 @@ export function PromotionWizard({ classes }: { classes: Class[] }) {
                                             <div className="text-slate-500">Dari:</div>
                                             <div className="font-medium text-slate-900 text-right">{classes.find(c => c.id === sourceClassId)?.name}</div>
                                             <div className="text-slate-500">Ke:</div>
-                                            <div className="font-medium text-blue-600 text-right">
+                                            <div className="font-medium text-emerald-700 text-right">
                                                 {classes.find(c => c.id === targetClassId)?.name}
                                                 <span className="text-xs font-normal text-slate-500 ml-1">({classes.find(c => c.id === targetClassId)?.academic_year})</span>
                                             </div>

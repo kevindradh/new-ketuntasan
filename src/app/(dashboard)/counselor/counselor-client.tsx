@@ -116,7 +116,7 @@ export function CounselorDashboardClient({ sheets, stats }: CounselorDashboardCl
                                 <p className="text-sm text-slate-500">Menunggu Approval</p>
                                 <p className="text-2xl font-bold">{stats.pending}</p>
                             </div>
-                            <Clock className="h-8 w-8 text-amber-600" />
+                            <Clock className="h-8 w-8 text-emerald-700" />
                         </div>
                     </CardContent>
                 </Card>
@@ -138,7 +138,7 @@ export function CounselorDashboardClient({ sheets, stats }: CounselorDashboardCl
                                 <p className="text-sm text-slate-500">Total Lembar</p>
                                 <p className="text-2xl font-bold">{stats.total}</p>
                             </div>
-                            <CheckCircle2 className="h-8 w-8 text-blue-600" />
+                            <CheckCircle2 className="h-8 w-8 text-emerald-700" />
                         </div>
                     </CardContent>
                 </Card>

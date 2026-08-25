@@ -83,7 +83,7 @@ export default function LoginPage() {
             <div className={`w-full max-w-[400px] transition-all duration-500 ease-out ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
                 {/* Logo / Brand Section */}
                 <div className="flex flex-col items-center mb-8">
-                    <div className="h-12 w-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20 mb-4">
+                    <div className="h-12 w-12 bg-emerald-700 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-700/20 mb-4">
                         <GraduationCap className="h-7 w-7 text-white" />
                     </div>
                     <h1 className="text-2xl font-bold text-slate-900 tracking-tight">e-Tuntas</h1>
@@ -135,7 +135,7 @@ export default function LoginPage() {
 
                             <Button
                                 type="submit"
-                                className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+                                className="w-full h-10 bg-emerald-700 hover:bg-emerald-800 text-white font-medium transition-colors"
                                 disabled={loading}
                             >
                                 {loading ? (

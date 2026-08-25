@@ -292,7 +292,7 @@ export function StudentImportWizard({ classes }: StudentImportWizardProps) {
                         </div>
 
                         <div className="border-2 border-dashed border-slate-200 rounded-lg p-10 flex flex-col items-center justify-center text-center space-y-4 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                            <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                            <div className="h-12 w-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700">
                                 <Upload className="h-6 w-6" />
                             </div>
                             <div>
@@ -361,7 +361,7 @@ export function StudentImportWizard({ classes }: StudentImportWizardProps) {
                                             <TableRow key={i}>
                                                 <TableCell className="font-medium">{normalized.full_name || '-'}</TableCell>
                                                 <TableCell>
-                                                    {normalized.email || <span className="text-blue-500 italic text-xs">Auto-generate</span>}
+                                                    {normalized.email || <span className="text-emerald-600 italic text-xs">Auto-generate</span>}
                                                 </TableCell>
                                                 <TableCell>{normalized.nis || normalized.nisn || '-'}</TableCell>
                                                 <TableCell>

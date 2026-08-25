@@ -60,11 +60,11 @@ interface HomeroomDashboardClientProps {
 }
 
 const COLORS = {
-    'PENDING': '#94a3b8', // Slate 400
-    'IN_PROGRESS': '#3b82f6', // Blue 500
-    'HOMEROOM_REVIEW': '#f59e0b', // Amber 500
-    'COUNSELOR_REVIEW': '#8b5cf6', // Violet 500
-    'APPROVED': '#10b981', // Emerald 500
+    'PENDING': '#A6F2DE', // Bottle 200
+    'IN_PROGRESS': '#47D1AC', // Bottle 400
+    'HOMEROOM_REVIEW': '#21BA92', // Bottle 500
+    'COUNSELOR_REVIEW': '#0D9C76', // Bottle 600
+    'APPROVED': '#006A4E', // Bottle 700
     'REJECTED': '#ef4444', // Red 500
 }
 
@@ -155,10 +155,10 @@ export function HomeroomDashboardClient({ sheets, stats }: HomeroomDashboardClie
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-slate-500">Menunggu Approval</p>
-                                <p className="text-3xl font-bold text-amber-600">{stats.pending}</p>
+                                <p className="text-3xl font-bold text-emerald-700">{stats.pending}</p>
                             </div>
-                            <div className="p-3 bg-amber-50 rounded-xl">
-                                <Clock className="h-6 w-6 text-amber-600" />
+                            <div className="p-3 bg-emerald-50 rounded-xl">
+                                <Clock className="h-6 w-6 text-emerald-700" />
                             </div>
                         </div>
                     </CardContent>
@@ -181,10 +181,10 @@ export function HomeroomDashboardClient({ sheets, stats }: HomeroomDashboardClie
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-slate-500">Dalam Proses</p>
-                                <p className="text-3xl font-bold text-blue-600">{stats.inProgress}</p>
+                                <p className="text-3xl font-bold text-emerald-700">{stats.inProgress}</p>
                             </div>
-                            <div className="p-3 bg-blue-50 rounded-xl">
-                                <BarChart3 className="h-6 w-6 text-blue-600" />
+                            <div className="p-3 bg-emerald-50 rounded-xl">
+                                <BarChart3 className="h-6 w-6 text-emerald-700" />
                             </div>
                         </div>
                     </CardContent>
@@ -295,7 +295,7 @@ export function HomeroomDashboardClient({ sheets, stats }: HomeroomDashboardClie
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => setSelectedSheet(sheet)}
-                                                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                        className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50"
                                                     >
                                                         <Eye className="h-4 w-4 mr-1" />
                                                         Review

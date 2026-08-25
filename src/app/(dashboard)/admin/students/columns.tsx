@@ -99,7 +99,7 @@ export const getColumns = ({ onEdit, onDelete, onResetPassword }: ColumnsProps):
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                        className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50"
                         onClick={() => onResetPassword(student)}
                     >
                         <KeyRound className="h-4 w-4" />
