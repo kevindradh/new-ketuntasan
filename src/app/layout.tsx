@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" suppressHydrationWarning>
+    <html lang="id" suppressHydrationWarning className="scroll-smooth">
       <body className={`${jakarta.variable} font-sans`}>
         {children}
         <Toaster position="top-right" richColors />

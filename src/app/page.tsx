@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Navbar } from "@/components/landing/navbar";
 import {
   GraduationCap,
   CheckCircle2,
@@ -18,30 +19,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-emerald-50">
       {/* Navigation */}
-      <nav className="container mx-auto px-4 py-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl gradient-primary">
-              <GraduationCap className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-emerald-700">
-              e-Tuntas
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/login">
-              <Button variant="ghost" className="font-medium">
-                Masuk
-              </Button>
-            </Link>
-            {/* <Link href="/register">
-              <Button className="gradient-primary border-0 font-medium">
-                Daftar
-              </Button>
-            </Link> */}
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
@@ -196,7 +174,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="bg-white py-24">
+      <section id="fitur" className="scroll-mt-20 bg-white py-24">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
@@ -265,7 +243,7 @@ export default function Home() {
       </section>
 
       {/* Workflow Section */}
-      <section className="py-24 bg-emerald-900 text-white">
+      <section id="alur" className="scroll-mt-20 py-24 bg-emerald-900 text-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -301,7 +279,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24">
+      <section id="kontak" className="scroll-mt-20 py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center bg-emerald-700 rounded-3xl p-12 shadow-2xl shadow-emerald-700/25">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
