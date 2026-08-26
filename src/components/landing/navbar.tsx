@@ -7,8 +7,9 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
-  { href: "#fitur", label: "Fitur" },
+  { href: "#tentang", label: "Tentang" },
   { href: "#alur", label: "Alur" },
+  { href: "#testimoni", label: "Testimoni" },
   { href: "#kontak", label: "Kontak" },
 ];
 
