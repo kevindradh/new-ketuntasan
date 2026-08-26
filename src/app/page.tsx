@@ -363,7 +363,7 @@ export default function Home() {
         
         <div className="container mx-auto px-4 max-w-6xl relative z-10">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 text-center mb-12 max-w-3xl mx-auto leading-tight tracking-tight">
-            Dipercaya oleh seluruh elemen di SMKN 1 Bondowoso
+            Dipercaya oleh Berbagai Institusi Pendidikan
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -548,7 +548,7 @@ export default function Home() {
                 <span className="text-xl font-bold text-slate-900 tracking-tight">TUNTASIN</span>
               </div>
               <p className="text-slate-600 leading-relaxed max-w-md mb-4 text-sm">
-                Platform digitalisasi alur validasi ketuntasan belajar siswa. Cepat, transparan, dan terintegrasi untuk mendukung ekosistem akademik SMKN 1 Bondowoso.
+                Platform digitalisasi alur validasi ketuntasan belajar siswa. Cepat, transparan, dan terintegrasi untuk mendukung ekosistem akademik sekolah Anda.
               </p>
               <div className="flex items-center gap-3">
                 {/* Social Placeholders */}
@@ -586,16 +586,16 @@ export default function Home() {
                     <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   </div>
                   <span className="text-slate-600 leading-relaxed text-xs">
-                    Jl. HOS Cokroaminoto No.110, <br />
-                    Badean, Kec. Bondowoso, <br />
-                    Kab. Bondowoso, Jawa Timur 68214
+                    Jl. Pendidikan No. 123, <br />
+                    Kec. Digital, Kota Anda, <br />
+                    Indonesia 12345
                   </span>
                 </li>
                 <li className="flex items-center gap-3">
                   <div className="h-5 w-5 shrink-0 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-emerald-600">
                     <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                   </div>
-                  <a href="mailto:info@smkn1bondowoso.sch.id" className="text-slate-600 hover:text-emerald-600 transition-colors">info@smkn1bondowoso.sch.id</a>
+                  <a href="mailto:info@sekolahanda.sch.id" className="text-slate-600 hover:text-emerald-600 transition-colors">info@sekolahanda.sch.id</a>
                 </li>
                 <li className="flex items-center gap-3">
                   <div className="h-5 w-5 shrink-0 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-emerald-600">

@@ -9,8 +9,8 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "TUNTASIN SMKN 1 Bondowoso",
-  description: "Sistem Ketuntasan Mata Pelajaran SMKN 1 Bondowoso",
+  title: "TUNTASIN - Sistem Validasi Ketuntasan Belajar",
+  description: "Platform digitalisasi alur validasi ketuntasan belajar siswa cepat, transparan, dan terintegrasi.",
 };
 
 export default function RootLayout({

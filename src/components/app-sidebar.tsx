@@ -206,7 +206,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                     TUNTASIN
                   </span>
                   <span className="truncate text-xs text-muted-foreground">
-                    SMKN 1 Bondowoso
+                    Sekolah Anda
                   </span>
                 </div>
               </Link>

@@ -83,7 +83,7 @@ export function StudentMobileApp({ profile, currentClass, sheets }: StudentMobil
             doc.text('LEMBAR KETUNTASAN SISWA', 105, 20, { align: 'center' })
             doc.setFontSize(12)
             doc.setFont('helvetica', 'normal')
-            doc.text('Sistem Ketuntasan Mata Pelajaran SMKN 1 Bondowoso', 105, 28, { align: 'center' })
+            doc.text('Sistem Ketuntasan Mata Pelajaran Digital', 105, 28, { align: 'center' })
 
             doc.setLineWidth(0.5)
             doc.line(20, 35, 190, 35)

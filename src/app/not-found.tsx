@@ -40,7 +40,7 @@ export default function NotFound() {
 
                 {/* Footer/Copyright */}
                 <div className="pt-8 text-xs text-slate-400">
-                    &copy; {new Date().getFullYear()} TUNTASIN SMKN 1 Bondowoso
+                    &copy; {new Date().getFullYear()} TUNTASIN
                 </div>
             </div>
         </div>
